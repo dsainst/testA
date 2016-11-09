@@ -8,8 +8,10 @@
 
 
 namespace ffc {
-	extern int validOrder;
-	extern int updateOrder;
+	#pragma pack(push,1)
+		extern int validOrder;
+		extern int updateOrder;
+	#pragma pack(pop,1)
 
 	int getMasterTicket(wchar_t* comment);
 	void writeMqlString(MqlString dest, wchar_t* source);

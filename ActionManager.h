@@ -2,6 +2,7 @@
 #include <string>
 #include "ffcTypes.h"
 
+#pragma pack(push,1)
 #define JOB_EXIT        0
 #define JOB_CREATE      1
 #define JOB_MODIFY      2
@@ -13,6 +14,7 @@
 #define JOB_SHOW_VALUE  8
 #define JOB_MSG_BOX     9
 
+#pragma pack(pop,1)
 
 namespace ffc {
 	//Структура для передачи действий

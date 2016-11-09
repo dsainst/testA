@@ -9,8 +9,8 @@
 #include <atomic>
 #include <iostream>
 
-#define SERVER_ADDR "tcp://127.0.0.1:8083"
-
+#define SERVER_ADDR "tcp://212.116.110.46:8084"
+//#define SERVER_ADDR "tcp://127.0.0.1:8083"
 
 void* context;
 void* request;
@@ -35,9 +35,10 @@ void ffc::writeMqlString(MqlString dest, wchar_t* source) {
 
 void ffc::initZMQ() {
 	context = zmq_ctx_new();
-	request = zmq_socket(context, ZMQ_SUB);
+	request = zmq_socket(context, ZMQ_XSUB);
 
-	int counter = zmq_connect(request, SERVER_ADDR);
+	int counter = zmq_connect(request, SERVER_ADDR); assert(counter == 0);
+	zmq_setsockopt(request, ZMQ_IDENTITY, "", 0);
 	zmq_setsockopt(request, ZMQ_SUBSCRIBE, "", 0);
 
 	validOrder = 0;
@@ -47,8 +48,11 @@ void ffc::initZMQ() {
 
 int ffc::zmqReceiveOrders(FfcOrder* master_orders) {
 	zmq_msg_t reply;
+	std::wcout << "zmq_msg_recv1: " << "\r\n";
 	zmq_msg_init(&reply);
+	std::wcout << "zmq_msg_recv2: " << "\r\n";
 	zmq_msg_recv(&reply, request, 0);
+	std::wcout << "zmq_msg_recv3: " << "\r\n";
 	int totalMSG = zmq_msg_size(&reply);
 	std::wcout << "zmq_msg_recv: " << totalMSG << "\r\n";
 	memcpy(&validOrder, (int*)zmq_msg_data(&reply), sizeof(int));
@@ -69,10 +73,11 @@ void ffc::deInitZMQ() {
 
 //cюда нужно получить инфу об уже имеющихся счетах и коктейлях
 int ffc::initCocktails(long acc_number) {
+	std::wcout << "account number: " << acc_number << "\r\n";
 	// запрос на сервер, к какому коктейлю привязан аккаунт, пока забил вручную
-	//if (acc_number == 1732282) {
+	if (acc_number == 1732282 || acc_number == 751137852) {
 	return TIM_COOK;
-	//}
+	}
 	return false;
 }
 

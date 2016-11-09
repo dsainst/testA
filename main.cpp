@@ -35,16 +35,6 @@ bool transmitterInit = false;
 
 namespace ffc {
 
-	int* setCocktails(int provider[], int name) {
-		int length = sizeof(provider) / sizeof(provider[0]);
-		std::wcout << " length = " << length << "\r\n";
-		for (int i = 0; i < length; i++) {
-			cocktails[name][i] = provider[i];
-			std::wcout << i << " - " << provider[i] << " sizeof=" << sizeof(provider[0]) << " sizeof2=" << sizeof(provider) << "\r\n";
-		}
-		return cocktails[name];
-	}
-
 	void ffc_RDeInit() {
 		deInitZMQ();
 		recieverInit = false;
@@ -61,10 +51,6 @@ namespace ffc {
 
 		initZMQ();
 
-		int a[] = { 64,11,43,39,15,3892 };
-
-		int* qwoe = setCocktails(a, BILL_GATES);
-
 		id_login = login;
 		ordersRCount = 0;
 		recieverInit = true;
@@ -72,7 +58,7 @@ namespace ffc {
 
 		id_cocktails = initCocktails(id_login); //751137852
 
-		std::wcout << "Receiver inited. - " << id_cocktails << " - " << qwoe[W_BUFFETT] << " sizeof- " << sizeof(a) << " - " << qwoe[5] << "\r\n";
+		std::wcout << "Receiver inited. Cocktails id = " << id_cocktails << "\r\n";
 		return true; //Инициализация успешна
 	}
 
