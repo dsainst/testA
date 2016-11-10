@@ -74,7 +74,7 @@ namespace ffc {
 
 		masterTickets[ordersRCount] = getMasterTicket(ROrderComment);
 
-		std::wcout << "updateOrder " << updateOrder << "\r\n";
+		//std::wcout << "updateOrder " << updateOrder << "\r\n";
 		ordersRCount++;
 		return ordersRCount;
 	}

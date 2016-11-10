@@ -99,8 +99,8 @@ void OnTimer()
   {
    if (!checkMarket()) return;
    
-   int minute = Minute();
-   needUpdate = minute?minute:60 - TimeRestart;
+   //int minute = Minute();
+   //needUpdate = minute?minute:60 - TimeRestart;
    
    int ordersTotal = OrdersTotal();
    int ordersCount = 0;
