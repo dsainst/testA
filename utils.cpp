@@ -9,13 +9,16 @@
 #include <atomic>
 #include <iostream>
 
-#define SERVER_ADDR "tcp://212.116.110.46:8083"
-//#define SERVER_ADDR "tcp://192.168.32.15:8083"
+//#define SERVER_ADDR "tcp://212.116.110.46:8083"
+#define SERVER_ADDR "tcp://127.0.0.1:8083"
 
 void* context;
 void* request;
 int ffc::validOrder;
 int ffc::updateOrder;
+FfcMsg ffc::msg = { 0 };
+bool ffc::threadActive = false;
+std::mutex ffc::mutex;
 
 int ffc::getMasterTicket(wchar_t* comment) {
 	wchar_t* pwc;
@@ -24,6 +27,15 @@ int ffc::getMasterTicket(wchar_t* comment) {
 	if (pwc == NULL) return 0;
 	//std::wcout << "getMagic " << comment << "/" << _wtoi(pwc) << "\r\n";
 	return _wtoi(pwc);
+}
+
+int ffc::getMasterTicket2(int magic) {
+	int res = MAGIC_EA_MASK & magic;
+	if (res > 4095) {
+		std::wcout << "Вать машу! \r\n";
+		return 0;
+	}
+	return res;
 }
 
 ///Копируем строку с++ в MQLSting (на стороне MQL больше ничего делать не надо)
@@ -46,25 +58,19 @@ void ffc::initZMQ() {
 	std::wcout << "Received: " << "connect = " << counter << "\r\n";
 }
 
-int ffc::zmqReceiveOrders(FfcOrder* master_orders) {
+void ffc::zmqReceiveOrders() {
+	threadActive = true;
 	zmq_msg_t reply;
-	//std::wcout << "zmq_msg_recv1: " << "\r\n";
 	zmq_msg_init(&reply);
-	//std::wcout << "zmq_msg_recv2: " << "\r\n";
 	zmq_msg_recv(&reply, request, 0);
-	//std::wcout << "zmq_msg_recv3: " << "\r\n";
 	int totalMSG = zmq_msg_size(&reply);
-	std::wcout << "zmq_msg_recv: " << totalMSG << "\r\n";
-	time_t  timev;
-	std::wcout << "ZMQ recv time " << time(&timev) << "\r\n";
-	memcpy(&validOrder, (int*)zmq_msg_data(&reply), sizeof(int));
-	memcpy(&updateOrder, (int*)zmq_msg_data(&reply) + 1, sizeof(int));
-	memcpy(master_orders, (int*)zmq_msg_data(&reply) + 2, totalMSG);
-
-	std::wcout << "Received: " << "valid = " << validOrder << " master_orders= " << totalMSG << " update= " << updateOrder << "\r\n";
+	mutex.lock();
+	memcpy(&msg, zmq_msg_data(&reply), totalMSG);
+	mutex.unlock();
+	std::wcout << "Receiver size order - " << totalMSG << ". \r\n";
+	std::wcout << "Received: valid = " << msg.validation << " count = " << msg.ordersCount << "\r\n";
 	zmq_msg_close(&reply);
-	int count = totalMSG / sizeof(FfcOrder);
-	return count;
+	threadActive = false;
 }
 
 void ffc::deInitZMQ() {

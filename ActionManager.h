@@ -31,7 +31,7 @@ namespace ffc {
 		double      tpprice;	// 8 bytes
 		double      slprice;	// 8 bytes
 		__time64_t	expiration;	// 8 bytes
-		MqlString	comment;	// 12 bytes
+//		MqlString	comment;	// 12 bytes
 	};
 #pragma pack(pop,1)
 
@@ -45,7 +45,7 @@ namespace ffc {
 
 	void createOrder(wchar_t* symbol, int type, double lots, double openPrice, double slPrice, double tpPrice, wchar_t* comment = L"", int cfgMagic = 0);
 	void createOrder(FfcOrder* order);
-	void modOrder(int ticket, double openprice, double slprice, double tpprice, wchar_t* symbol);
+	void modOrder(int ticket, int type, double openprice, double slprice, double tpprice, wchar_t* symbol);
 	void deleteOrder(int ticket);
 	void closeOrder(int ticket, double lots, double openprice);
 	void closeOrder(FfcOrder* order);

@@ -32,7 +32,6 @@ struct OrderAction
 	double		tpprice;
 	double		slprice;
 	datetime	   expiration;
-	string		comment;
 };
 
 
@@ -47,11 +46,10 @@ int    mqlOptimization;
 bool ffc_RInit(OrderAction& mql_order_action[], int length, long id_login);
 void ffc_RDeInit();
 void ffc_ROrdersCount(int orders);
-int ffc_RGetJob(int time);
-int ffc_ROrdersUpdate(int OrderTicket, int orderMagic, string OrderSymbol, int orderType,
-		double OrderLots, double OrderOpenPrice, datetime OrderOpenTime,
-		double OrderTakeProfit, double OrderStopLoss, double  OrderClosePrice, datetime  OrderCloseTime,
-		datetime OrderExpiration, double  OrderProfit, double  OrderCommission, double  OrderSwap, string OrderComment);
+int ffc_RGetJob();
+int ffc_ROrdersUpdate(int OrderTicket, int OrderMagic, string OrderSymbol, int OrderType,
+		double OrderLots, double OrderOpenPrice, double OrderTakeProfit, double OrderStopLoss,
+		datetime OrderExpiration);
 #import
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -63,9 +61,6 @@ int ffc_ROrdersUpdate(int OrderTicket, int orderMagic, string OrderSymbol, int o
 
 int totalOrders = 0;
 
-int TimeRestart = 0;
-int needUpdate;
-
 OrderAction mql_order_action[MAX_ORDER_COUNT];
   
 int OnInit()
@@ -76,7 +71,7 @@ int OnInit()
    
       for (int i=0; i<MAX_ORDER_COUNT; i++) {  //Выделяем память под строку (надо сделать один раз в начале)
          StringInit(mql_order_action[i].symbol, 16);  
-         StringInit(mql_order_action[i].comment, 32);
+         //StringInit(mql_order_action[i].comment, 32);
       }
       mql_order_action[0].symbol = "default";
       
@@ -99,26 +94,22 @@ void OnTimer()
   {
    if (!checkMarket()) return;
    
-   //int minute = Minute();
-   //needUpdate = minute?minute:60 - TimeRestart;
-   
    int ordersTotal = OrdersTotal();
    int ordersCount = 0;
    bool res = false;
    int magicNumber = 0;
-   //Alert ("ordersTotal=",ordersTotal);
+   Alert ("ordersTotal=",ordersTotal);
    while (ordersCount<ordersTotal) {
+   Alert ("ordersTotal2=",ordersTotal);
       if (OrderSelect(ordersCount, SELECT_BY_POS) && (magicNumber=OrderMagicNumber()) > 0) {
           ffc_ROrdersUpdate(OrderTicket(), magicNumber, OrderSymbol(), OrderType(), OrderLots(),
-            OrderOpenPrice(), OrderOpenTime(), OrderTakeProfit(), OrderStopLoss(),
-            OrderClosePrice(), OrderCloseTime(), OrderExpiration(),
-            OrderProfit(), OrderCommission(), OrderSwap(), OrderComment());
+            OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss(), OrderExpiration());
             //Print("Symbol=",Symbol());
       }
       ordersCount++;
    }
    
-   int action = ffc_RGetJob(needUpdate);
+   int action = ffc_RGetJob();
    
    if (action>0) 
 	   Alert("action = ",action);

@@ -135,7 +135,8 @@
       <ModuleDefinitionFile>Source.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(OutputPath)$(TargetFileName)" "C:\Windows" /Y</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

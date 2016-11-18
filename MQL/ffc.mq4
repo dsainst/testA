@@ -12,7 +12,7 @@
 MqlTick symbol_tick;
 double mpo[2];
 double mpc[2];
-int    sign[2];
+int    sign[2] = {1,-1};
 double kurs = 1; 
 double value;
 double symbolPoint;
@@ -49,8 +49,6 @@ bool checkSymbol(string symbol) {
    mpc[OP_SELL] = symbol_tick.ask;
    symbolPoint = MarketInfo(symbol, MODE_POINT);
    
-   sign[OP_BUY] = 1;
-   sign[OP_SELL] = -1;
    return true; 
 }
 
