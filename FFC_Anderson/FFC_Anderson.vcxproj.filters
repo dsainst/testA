@@ -40,5 +40,9 @@
     <None Include="Source.def">
       <Filter>Файлы исходного кода</Filter>
     </None>
+    <None Include="..\MQL\Errors.mq4" />
+    <None Include="..\MQL\FF_Anderson.mq4" />
+    <None Include="..\MQL\ffc.mq4" />
+    <None Include="..\MQL\Order.mq4" />
   </ItemGroup>
 </Project>

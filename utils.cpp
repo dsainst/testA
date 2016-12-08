@@ -3,7 +3,6 @@
 
 #include "zmq.h"
 
-#include <assert.h>
 #include <stdlib.h>
 #include <thread>
 #include <atomic>
@@ -49,7 +48,7 @@ void ffc::initZMQ() {
 	context = zmq_ctx_new();
 	request = zmq_socket(context, ZMQ_SUB);
 
-	int counter = zmq_connect(request, SERVER_ADDR); assert(counter == 0);
+	int counter = zmq_connect(request, SERVER_ADDR); 
 	//zmq_setsockopt(request, ZMQ_IDENTITY, "", 0);
 	zmq_setsockopt(request, ZMQ_SUBSCRIBE, "", 0);
 

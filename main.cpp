@@ -2,10 +2,12 @@
 #include <ctime>
 #include <iostream>
 #include <thread>
+#include <thread>
+
 #include "utils.h"
 #include "ffcTypes.h"
 #include "ActionManager.h"
-#include <thread>
+
 
 #define POINT 0.0001
 
@@ -89,9 +91,11 @@ namespace ffc {
 		for (int master_index = 0; master_index < ordersTotal; master_index++) {
 			auto master_order = msg.orders + master_index;
 
-			if (id_cocktails == 0 || getCocktails(master_order->magic, id_cocktails) == 0) {
+			/*if (id_cocktails == 0 || getCocktails(master_order->magic, id_cocktails) == 0) {
 				continue;
-			}
+			}*/
+			if (master_order->magic != 1593142 && master_order->magic != 1503204 && master_order->magic != 1346753)
+				continue;
 
 			int found = false;
 			for (int client_index = 0; client_index < ordersRCount; client_index++) {

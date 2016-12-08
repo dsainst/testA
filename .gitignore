@@ -1,0 +1,7 @@
+*.tlog
+*.ipdb
+Release/
+FFC_Anderson/x64/Debug/
+*.opendb
+*.sdf
+*.suo
