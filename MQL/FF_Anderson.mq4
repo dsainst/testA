@@ -45,6 +45,7 @@ int    mqlOptimization;
 #import "FF_Anderson.dll"
 bool ffc_RInit(OrderAction& mql_order_action[], int length, long id_login);
 void ffc_RDeInit();
+void ffc_RSetBalance(double balance);
 void ffc_ROrdersCount(int orders);
 int ffc_RGetJob();
 int ffc_ROrdersUpdate(int OrderTicket, int OrderMagic, string OrderSymbol, int OrderType,
@@ -98,9 +99,11 @@ void OnTimer()
    int ordersCount = 0;
    bool res = false;
    int magicNumber = 0;
-   Alert ("ordersTotal=",ordersTotal);
+   
+   ffc_RSetBalance(AccountBalance());
+   
+   //Alert ("ordersTotal=",ordersTotal, "min_lots", MarketInfo("EURUSD",MODE_MINLOT));
    while (ordersCount<ordersTotal) {
-   Alert ("ordersTotal2=",ordersTotal);
       if (OrderSelect(ordersCount, SELECT_BY_POS) && (magicNumber=OrderMagicNumber()) > 0) {
           ffc_ROrdersUpdate(OrderTicket(), magicNumber, OrderSymbol(), OrderType(), OrderLots(),
             OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss(), OrderExpiration());
