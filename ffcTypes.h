@@ -1,11 +1,12 @@
 #pragma once
 
+#pragma pack(push,1)
 #define SYMBOL_LENGTH	16
 #define COMMENT_LENGTH	32
 #define MAX_ORDER_COUNT	200
 #define MAGIC_EA	0x70004000
 #define MAGIC_EA_MASK	0x00000FFF
-
+#pragma pack(pop,1)
 
 //Структура для передачи строк
 #pragma pack(push,1)
@@ -16,8 +17,6 @@ struct MqlString
 					   //Длина строки хранится по адресу *(((int*)buffer) - 1)
 	int    reserved; // 4 bytes
 };
-#pragma pack(pop,1)
-#pragma pack(push,1)
 struct FfcOrder
 {
 	int			ticket;
@@ -37,12 +36,26 @@ struct FfcOrder
 	//double		swap;
 	//wchar_t		comment[COMMENT_LENGTH];
 };
-#pragma pack(pop,1)
-#pragma pack(push,1)
 struct FfcMsg
 {
 	int		validation;
 	int		ordersCount;
 	FfcOrder orders[MAX_ORDER_COUNT];
+};
+struct SymbolInfo
+{
+	//wchar_t		name[SYMBOL_LENGTH];
+	double		min_lot;
+	double		max_lot;
+	double		lotstep;
+	double		tick_value;
+	double		points;
+	double		lotsize;
+	double		ask;
+	double		bid;
+	double		digits;
+	double		stoplevel;
+	double		freezelevel;
+	double		trade_allowed;
 };
 #pragma pack(pop,1)

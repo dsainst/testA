@@ -19,6 +19,8 @@ FfcMsg ffc::msg = { 0 };
 bool ffc::threadActive = false;
 std::mutex ffc::mutex;
 
+std::map<std::string, SymbolInfo> ffc::SymbolInfos;
+
 int ffc::getMasterTicket(wchar_t* comment) {
 	wchar_t* pwc;
 	pwc = wcstok(comment, L"_");
@@ -42,6 +44,17 @@ void ffc::writeMqlString(MqlString dest, wchar_t* source) {
 	int len = min(wcslen(source), dest.size - 1);  //Определяем длину строки (небольше распределенного буфера)
 	wcscpy_s(dest.buffer, len + 1, source);  //Копируем включая терминирующий ноль
 	*(((int*)dest.buffer) - 1) = len;  // Записываем длину строки (хак, может измениться в будующих версиях терминала)
+}
+
+std::string ffc::WC2MB(const wchar_t* line) {
+	if (line == nullptr) {
+		return std::string("null");
+	}
+	std::size_t len_ = WideCharToMultiByte(CP_UTF8, 0, line, -1, NULL, 0, NULL, NULL);
+	std::string buff_(len_ + 1, 0);
+	//std::wcstombs(&buff_[0], line, len_+1);
+	WideCharToMultiByte(CP_UTF8, 0, line, -1, &buff_[0], len_, NULL, NULL);
+	return buff_;
 }
 
 void ffc::initZMQ() {

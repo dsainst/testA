@@ -4,6 +4,8 @@
 
 int ffc::actionsCount = 0;
 int ffc::actionsMaxCount = 0;
+double ffc::deltaStopLevel = 0;
+double ffc::deltaFreezeLevel = 0;
 ffc::MqlAction* ffc::actions = NULL;
 
 void ffc::initActions(MqlAction* arrayPtr, int length)
@@ -54,7 +56,7 @@ void ffc::createOrder(FfcOrder* order) {
 	//writeMqlString(action->comment, order->comment);
 }
 
-void ffc::modOrder(int ticket, int type, double openprice, double slprice, double tpprice, wchar_t* symbol) { //
+void ffc::modOrder(int ticket, int type, double lots, double openprice, double slprice, double tpprice, wchar_t* symbol) { //
 	if (actionsCount + 1 >= actionsMaxCount) return;
 	auto action = actions + actionsCount;
 	actionsCount++;
@@ -63,7 +65,7 @@ void ffc::modOrder(int ticket, int type, double openprice, double slprice, doubl
 	action->ticket = ticket;
 	action->type = type;
 	action->magic = 0;
-	action->lots = 0;
+	action->lots = lots;
 	action->openprice = openprice; // для рыночных ордеров возможно нужен 0 - проверить!!!
 	action->slprice = slprice;
 	action->tpprice = tpprice;
@@ -159,4 +161,29 @@ void ffc::showValue(int line, wchar_t* value) {
 //	writeMqlString(action->comment, value);
 }
 
+
+void ffc::terminalInfoCalc(wchar_t* symbol_name) {
+	auto Info = &SymbolInfos[WC2MB(symbol_name)];
+	deltaStopLevel = Info->stoplevel	* Info->points;
+	deltaFreezeLevel = Info->freezelevel	* Info->points;
+}
+
+double ffc::normLot(double value, wchar_t* symbol_name) {
+	auto Info = &SymbolInfos[WC2MB(symbol_name)];
+	value = ceil(value / Info->lotstep) * Info->lotstep;
+	value = max(value, Info->min_lot);
+	return min(value, Info->max_lot);
+}
+
+double ffc::normLotMin(double value, wchar_t* symbol_name) {
+	auto Info = &SymbolInfos[WC2MB(symbol_name)];
+	value = floor(value / Info->lotstep) * Info->lotstep;
+	value = max(value, Info->min_lot);
+	return min(value, Info->max_lot);
+}
+
+double ffc::normPrice(double value, wchar_t* symbol_name) {
+	auto Info = &SymbolInfos[WC2MB(symbol_name)];
+	return floor(value / Info->points + 0.5) * Info->points;
+}
 

@@ -13,7 +13,6 @@
 #define JOB_DRAW_ORDER  7
 #define JOB_SHOW_VALUE  8
 #define JOB_MSG_BOX     9
-
 #pragma pack(pop,1)
 
 namespace ffc {
@@ -37,6 +36,9 @@ namespace ffc {
 
 	extern int actionsCount;
 	extern int actionsMaxCount;
+
+	extern double deltaStopLevel;
+	extern double deltaFreezeLevel;
 	extern MqlAction* actions;
 
 	void initActions(MqlAction* arrayPtr, int length);
@@ -45,12 +47,19 @@ namespace ffc {
 
 	void createOrder(wchar_t* symbol, int type, double lots, double openPrice, double slPrice, double tpPrice, wchar_t* comment = L"", int cfgMagic = 0);
 	void createOrder(FfcOrder* order);
-	void modOrder(int ticket, int type, double openprice, double slprice, double tpprice, wchar_t* symbol);
+	void modOrder(int ticket, int type, double lots, double openprice, double slprice, double tpprice, wchar_t* symbol);
 	void deleteOrder(int ticket);
 	void closeOrder(int ticket, double lots, double openprice);
 	void closeOrder(FfcOrder* order);
 	void deleteOrder(FfcOrder* order);
 
 	void showValue(int line, wchar_t* value);
+
+	double normLotMin(double value, wchar_t* symbol_name);
+	double normPrice(double value, wchar_t* symbol_name);
+	double normLot(double value, wchar_t* symbol_name);
+	void terminalInfoCalc(wchar_t* symbol_name);
+//	bool check_sl(int type, double low_price, double high_price);
+//	int check_new(int type, double lots, double openprice, double slprice, double tpprice);
 
 }
