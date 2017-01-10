@@ -1,0 +1,9 @@
+EXPORTS
+
+ffc_RInit
+ffc_ROrdersUpdate
+ffc_RGetJob
+ffc_RDeInit
+ffc_RSetBalance
+ffc_RHistoryUpdate
+ffc_RInitSymbols

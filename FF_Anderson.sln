@@ -3,20 +3,56 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFC_Anderson", "FFC_Anderson\FFC_Anderson.vcxproj", "{51250061-430A-4453-A3BA-5047A78C92F4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FF_Anderson", "FF_Anderson.vcxproj", "{51250061-430A-4453-A3BA-5047A78C92F4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		debug_shared|x64 = debug_shared|x64
+		debug_shared|x86 = debug_shared|x86
+		debug_static_md|x64 = debug_static_md|x64
+		debug_static_md|x86 = debug_static_md|x86
+		debug_static_mt|x64 = debug_static_mt|x64
+		debug_static_mt|x86 = debug_static_mt|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		release_shared|x64 = release_shared|x64
+		release_shared|x86 = release_shared|x86
+		release_static_md|x64 = release_static_md|x64
+		release_static_md|x86 = release_static_md|x86
+		release_static_mt|x64 = release_static_mt|x64
+		release_static_mt|x86 = release_static_mt|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_shared|x64.ActiveCfg = Debug|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_shared|x64.Build.0 = Debug|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_shared|x86.ActiveCfg = Debug|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_shared|x86.Build.0 = Debug|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_static_md|x64.ActiveCfg = Debug|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_static_md|x64.Build.0 = Debug|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_static_md|x86.ActiveCfg = Debug|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_static_md|x86.Build.0 = Debug|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_static_mt|x64.ActiveCfg = Debug|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_static_mt|x64.Build.0 = Debug|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_static_mt|x86.ActiveCfg = Debug|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.debug_static_mt|x86.Build.0 = Debug|Win32
 		{51250061-430A-4453-A3BA-5047A78C92F4}.Debug|x64.ActiveCfg = Debug|x64
 		{51250061-430A-4453-A3BA-5047A78C92F4}.Debug|x64.Build.0 = Debug|x64
 		{51250061-430A-4453-A3BA-5047A78C92F4}.Debug|x86.ActiveCfg = Debug|Win32
 		{51250061-430A-4453-A3BA-5047A78C92F4}.Debug|x86.Build.0 = Debug|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_shared|x64.ActiveCfg = Release|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_shared|x64.Build.0 = Release|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_shared|x86.ActiveCfg = Release|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_shared|x86.Build.0 = Release|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_static_md|x64.ActiveCfg = Release|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_static_md|x64.Build.0 = Release|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_static_md|x86.ActiveCfg = Release|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_static_md|x86.Build.0 = Release|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_static_mt|x64.ActiveCfg = Release|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_static_mt|x64.Build.0 = Release|x64
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_static_mt|x86.ActiveCfg = Release|Win32
+		{51250061-430A-4453-A3BA-5047A78C92F4}.release_static_mt|x86.Build.0 = Release|Win32
 		{51250061-430A-4453-A3BA-5047A78C92F4}.Release|x64.ActiveCfg = Release|x64
 		{51250061-430A-4453-A3BA-5047A78C92F4}.Release|x64.Build.0 = Release|x64
 		{51250061-430A-4453-A3BA-5047A78C92F4}.Release|x86.ActiveCfg = Release|Win32

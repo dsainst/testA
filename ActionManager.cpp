@@ -18,7 +18,6 @@ void ffc::resetActions() {
 	actionsCount = 0;
 }
 
-
 void ffc::createOrder(wchar_t* symbol, int type, double lots, double openPrice, double slPrice, double tpPrice, wchar_t* comment, int stMagic) {
 	if (actionsCount + 1 >= actionsMaxCount) return;
 	auto action = actions + actionsCount;

@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "ffcTypes.h"
 #include "ActionManager.h"
+#include "ConnectionManager.h"
 
 
 #define POINT 0.0001
@@ -58,6 +59,8 @@ namespace ffc {
 			SetConsoleOutputCP(CP_UTF8);// GetACP());
 			SetConsoleCP(CP_UTF8);
 		}
+
+		comSession();
 
 		initZMQ();
 
@@ -122,7 +125,7 @@ namespace ffc {
 
 
 	int ffc_RGetJob() {
-		ffc::resetActions();
+		resetActions();
 		if (!threadActive)
 			std::thread(zmqReceiveOrders).detach();
 		mutex.lock();
