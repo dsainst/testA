@@ -2,7 +2,6 @@
 #include <ctime>
 #include <iostream>
 #include <thread>
-#include <thread>
 
 #include "utils.h"
 #include "ffcTypes.h"
@@ -59,6 +58,7 @@ namespace ffc {
 			SetConsoleOutputCP(CP_UTF8);// GetACP());
 			SetConsoleCP(CP_UTF8);
 		}
+
 
 		comSession();
 

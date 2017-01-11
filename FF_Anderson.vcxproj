@@ -78,7 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86);</LibraryPath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86);C:\dev\Mql4Copier\poco-1.6\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -124,16 +124,16 @@
       <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;WIN32;NDEBUG;ZMQ_STATIC;_WINDOWS;_USRDLL;FFC_ANDERSON_EXPORTS;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_WCSTOK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>C:\dev\Mql4Copier\poco-1.6\JSON\include;C:\dev\Mql4Copier\poco-1.6\Crypto\include;C:\dev\Mql4Copier\poco-1.6\Util\include;C:\dev\Mql4Copier\poco-1.6\NetSSL_OpenSSL\include;C:\dev\Mql4Copier\poco-1.6\Net\include;C:\dev\Mql4Copier\poco-1.6\Foundation\include;C:\Users\TomKein\Documents\GitHub\libzmq\include;C:\dev\Mql4Copier\libzmq\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\dev\Mql4Copier\poco-1.6\Excpt;C:\dev\Mql4Copier\poco-1.6\Crypto\include;C:\dev\Mql4Copier\poco-1.6\Util\include;C:\dev\Mql4Copier\poco-1.6\NetSSL_OpenSSL\include;C:\dev\Mql4Copier\poco-1.6\Net\include;C:\dev\Mql4Copier\poco-1.6\Foundation\include;C:\Users\TomKein\Documents\GitHub\libzmq\include;C:\dev\Mql4Copier\libzmq\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\dev\Mql4Copier\poco-1.6\lib;C:\dev\Mql4Copier\libzmq\bin\Win32\Release\v140_xp;C:\Users\TomKein\Documents\GitHub\libzmq\bin\Win32\Release\v140_xp\static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;wsock32.lib;ws2_32.lib;Iphlpapi.lib;libzmq.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;libeay32MT.lib;ssleay32MT.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;wsock32.lib;ws2_32.lib;Iphlpapi.lib;libzmq.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>Source.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>

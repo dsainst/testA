@@ -20,7 +20,9 @@
 namespace ffc {
 	void				comSession();
 
-	static nlohmann::json	mainPackage;
+	using json = nlohmann::json;
+
+	static json			mainPackage;
 	static bool			isStaticSended;
 	static bool			isNetAllowed;		//Разрешен ли запуск модуля связи
 	static bool			newCom;				//Если установлен, то сеанс вне расписания
@@ -67,7 +69,7 @@ namespace ffc {
 	static int			updateAccountStep(double balance, double equity, double profit);
 	static void			AnswerHandler(const nlohmann::json answer);
 	static void			reset();
-	static std::string	send(const std::string msg);
+	std::string			send(const std::string msg);
 
 	static int			netCount(int type);
 	static void			setRegKey(std::string key, int			value);
@@ -82,7 +84,7 @@ namespace ffc {
 	static bool			getRegBool(std::string key);
 	static bool			isRegKeyExist(std::string key);
 	static std::string	ReadKey();
-	static void			netWorker();
+	void				netWorker();
 	static void			WriteKey(const std::string key);
 
 }  //namespace ffc

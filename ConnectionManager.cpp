@@ -1,3 +1,4 @@
+#pragma execution_character_set( "utf-8" )
 #include <thread>
 #include <stdio.h>
 
@@ -23,7 +24,7 @@
 
 void ffc::sendStaticInfo()
 {
-	nlohmann::json j;
+	json j;
 
 	j["acc"] = "2312";
 
@@ -66,7 +67,6 @@ int ffc::updateAccountStep(double balance, double equity, double profit)
 
 void ffc::netWorker()
 {
-
 	serverKey = ffc::ReadKey();
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -78,11 +78,6 @@ void ffc::netWorker()
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 	}
-	//LOG_I("NetWorker ended");
-	//fxc::NDC::deinit();
-
-	//DEBUG_CATCH("NetWorker")
-	//	LOG_DEINIT;
 	isNetThreadActive = false;
 }
 
@@ -90,45 +85,30 @@ void ffc::comSession() {
 	std::string msg;
 	std::string response;
 	newCom = false;
-	if (clientErrors != "") {
-		mainPackage["clientErrors"] = clientErrors.c_str();
-		clientErrors = "";
-	}
-	mainPackage["accountBalance"] = accountBalance;
-	mainPackage["accountEquity"] = accountEquity;
-	mainPackage["accountProfit"] = accountProfit;
-	/*for (auto pair : openOrders) {
-	nlohmann::json order;
-	order["ticket"] = pair.first;// second->ticket;
-	order["type"] = pair.second.type;
-	order["symbol"] = pair.second.symbol.c_str();
-	order["magic"] = pair.second.magic;
-	order["lots"] = pair.second.lots;
-	order["opentime"] = pair.second.opentime;
-	order["openprice"] = pair.second.openprice;
-	order["tpprice"] = pair.second.tpprice;
-	order["slprice"] = pair.second.slprice;
-	order["profit"] = pair.second.profit;
-	mainPackage["openOrders"].push_back(order);
-	}*/
+
+	mainPackage["accountBalance"] = 54;
+	mainPackage["accountNumber"] = 23849;
+
 	msg = mainPackage.dump().c_str();
+	std::cout << "msg = " << msg << "\r\n";
 	mainPackage.clear();
 	//openOrders.clear();
 	response = send(msg);
 	if (response != "") {
-		nlohmann::json answer;
-		answer = nlohmann::json::parse(response);
+		json answer;
+		answer = json::parse(response.c_str());
 		if (!answer.empty()) {
-			//std::wcout << answer.get << "/r/n";
+			std::cout << "response " << response << "\r\n";
+			std::cout << "Answer " << answer << "\r\n";
 			//AnswerHandler(answer);		//Обработка ответов сервера (lock)
 		}
-		//track("ffc::ComSession() done");
 	}
 	else {
 	}
+	std::wcout << "ffc::ComSession() done" << "\r\n";
 }
 
-void ffc::AnswerHandler(const nlohmann::json answer)
+void ffc::AnswerHandler(const json answer)
 {
 	bool statusUpdate = false;
 	auto itr = answer.find("wantStatic");
@@ -284,15 +264,13 @@ std::string ffc::send(const std::string msg) {
 		form.prepareSubmit(req);
 
 		form.write(client_session.sendRequest(req));
-		//LOG_T("send message: %s", msg.c_str());
+		//std::cout << "send message: " << msg.c_str() << "\r\n";
 
 		Poco::Net::HTTPResponse res;
 
 		std::istream &is = client_session.receiveResponse(res);
 		std::stringstream ss;
 		Poco::StreamCopier::copyStream(is, ss);
-		//LOG_T("-> received: %s", ss.str().c_str());
-		//LOG_T("send session done");
 		return ss.str();
 	}
 	catch (Poco::Exception& e) {
@@ -308,7 +286,6 @@ int	 ffc::netCount(int type)
 	return 0;
 }
 
-#pragma region WinRegistry
 void ffc::setRegKey(std::string key, int value)
 {
 	if (regPath.empty()) {
@@ -450,4 +427,3 @@ void ffc::WriteKey(const std::string key)
 		std::wcout << "WriteKey = " << e.message().c_str() << "/r/n";
 	}
 }
-#pragma endregion
