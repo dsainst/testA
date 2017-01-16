@@ -6,7 +6,7 @@
 #include "utils.h"
 #include "ffcTypes.h"
 #include "ActionManager.h"
-#include "ConnectionManager.h"
+#include "NetWorker.h"
 
 
 #define POINT 0.0001
@@ -42,6 +42,7 @@ int    sign[2] = { 1,-1 };
 double mpo[2];
 double mpc[2];
 
+nlohmann::json			ffc::mainPackage;
 
 namespace ffc {
 
@@ -59,9 +60,7 @@ namespace ffc {
 			SetConsoleCP(CP_UTF8);
 		}
 
-
 		comSession();
-
 		initZMQ();
 
 		id_login = login;
@@ -75,8 +74,6 @@ namespace ffc {
 			procent = procentic;
 
 		std::wcout << "id_login = " << id_login << " procent_ = " << procentic << "\r\n";
-
-
 		std::wcout << "Receiver inited.v3. Cocktails id = " << id_cocktails << "\r\n";
 		return true; //Инициализация успешна
 	}

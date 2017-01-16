@@ -1,7 +1,11 @@
 *.tlog
 *.ipdb
 Release/
-FFC_Anderson/x64/Debug/
+Debug/
+ipch/
+TestDebugger1/
 *.opendb
 *.sdf
 *.suo
+ConnectionManager.cpp
+ConnectionManager.h
