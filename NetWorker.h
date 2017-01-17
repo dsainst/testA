@@ -1,5 +1,7 @@
 #pragma once
 #include "include/json.hpp"
+#include "ffcTypes.h"
+#include "utils.h"
 #include <Poco/URI.h>
 #include <Poco/Path.h>
 #include "Poco/StreamCopier.h"
@@ -17,7 +19,75 @@
 #include <Poco/Util/WinRegistryKey.h>
 
 
-#define bill_server "https://api.fairforex.org/index.php?r=site/test"
+
+#pragma pack(push,1)
+#define bill_server "https://api.fairforex.org/" //index.php?r=site/test
+//work statuses
+#define STATUS_NOT_INIT			-1
+#define STATUS_OK				0
+#define STATUS_DANGER			1
+#define STATUS_SOFT_BREAK		2
+#define STATUS_HARD_BREAK		3
+#define STATUS_EMERGENCY_BREAK	4
+#define MAIN_SESSION_PERIOD	60
+#define DEFAULT_SERVER_KEY	"Promo2017"
+#define DEFAULT_INIT_REASON	"not initialized"
+#define DEFAULT_COMPANY_NAME	"FFAnderson"
+
+#define SYMBOL_MAX_LENGTH		255
+
+#define BASE_KEY64		0x70A12283F4B536C7
+#define EXPIRATION_LIMIT 3*24*60*60
+
+//work statuses
+#define STATUS_NOT_INIT			-1
+#define STATUS_OK				0
+#define STATUS_DANGER			1
+#define STATUS_SOFT_BREAK		2
+#define STATUS_HARD_BREAK		3
+#define STATUS_EMERGENCY_BREAK	4
+
+//Errors and status providers
+#define PROVIDER_BASE_OK			0
+#define PROVIDER_PERMISSION			1
+#define PROVIDER_AUTOTRADE			2
+#define PROVIDER_VERSION_MATCH		3
+#define PROVIDER_CHECK_PARAMS		4
+#define PROVIDER_PARSE_SYMBOL		5
+
+#define PROVIDERS_COUNT				6
+
+#define TIME_CONNECT_BILLING		100
+
+#define PROJECT_URL	   "fairforex.org"
+#define EXPERT_NAME    "FFAnderson"
+#define MAGIC_EA		0x70004000
+#define PARTNER_ID		""//YrDm6Gp-SKLF5fQDUDoD"
+
+#define EXPERT_VERSION "1.016"
+#define ADVISOR_VER		1016
+#define ADVISOR_ID		4
+#define COCKTAIL		0   //0 - server defined
+
+struct TerminalS
+{
+	double			balance;
+	double			equity;
+	double			profit; 
+	int				tradeMode;
+	double			margin;
+	int				leverage;
+	int				limit;
+	int				stoplevel;
+	int				stopmode;
+	wchar_t			currency[SYMBOL_LENGTH];
+	wchar_t			companyName[SYMBOL_MAX_LENGTH];
+	wchar_t			name[SYMBOL_MAX_LENGTH];
+	wchar_t			server[SYMBOL_MAX_LENGTH];
+};
+#pragma pack(pop,1)
+
+
 
 
 
@@ -25,10 +95,74 @@ namespace ffc {
 
 	using json = nlohmann::json;
 
-	extern json			mainPackage;
+	extern int			cocktail_id;
 
-	extern void comSession();
-	std::string send(const std::string msg);
+	extern json			mainPackage;
+	extern long			acc_number;
+	static bool			isStaticSended;
+	static bool			newCom			= 0;				//Если установлен, то сеанс вне расписания
+	static int			serverStatus	= STATUS_NOT_INIT;		//Серверный статус разрешения торговли
+	static std::string	serverReason;		//Серверная причина статуса разрешения
+	static std::string	serverMessage;
+	static std::string	clientErrors;
+	static std::string	serverKey;			//Ключ доступа
+	static std::time_t	lastSession;		//Время последнего сеанса
+	static int			sessionPeriod;
+
+	static int			accountNumber;		//Номер аккаунта
+	static std::string	accountCompany;
+	static std::string	accountCurrency;         // наименование валюты текущего счета
+
+	static double		accountBalance;
+	static double		accountEquity;
+	static double		accountProfit;
+
+	static __time64_t	expirationDate;
+	static __int64		floatKey;
+	static int			controlTicket;		//Тикет контрольного ордера
+	static int			numOrders;
+
+	static int			advisorID;
+	static std::string	partnerID;
+	static int			advisorVersion;
+	static std::string	advisorName;
+	static std::string	regPath;
+	extern bool			isNetAllowed;		//Разрешен ли запуск модуля связи
+
+	union double_int64 {
+		double dval;
+		__int64 ival;
+	};
+
+	static std::vector<int>				interestTickets;	//Тикеты интересных ордеров
+
+	extern void			comSession();
+	static void			sendStaticInfo();
+	static void			setMyStatus();
+	int					updateAccountStep(TerminalS* TermInfo);
+
+	extern void			addOpenOrder(int _ticket, int _magic, std::string symbol, int _type, double _lots, double _openprice, double _tp, double _sl);
+
+	static void			AnswerHandler(const nlohmann::json answer);
+	static void			reset();
+	std::string			send(const std::string msg);
+
+	static int			netCount(int type);
+	static void			setRegKey(std::string key, int			value);
+	static void			setRegKey(std::string key, __int64		value);
+	static void			setRegKey(std::string key, double		value);
+	static void			setRegKey(std::string key, std::string	value);
+	static void			setRegKey(std::string key, bool			value);
+	static int			getRegInt(std::string key);
+	static __int64		getRegInt64(std::string key);
+	static double		getRegDouble(std::string key);
+	static std::string	getRegString(std::string key);
+	static bool			getRegBool(std::string key);
+	static bool			isRegKeyExist(std::string key);
+	static std::string	ReadKey();
+	extern void			netWorker();
+	void				setAccount();
+	static void			WriteKey(const std::string key);
 
 
 }

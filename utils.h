@@ -31,6 +31,8 @@ namespace ffc {
 	//int* setCocktails(int provider[], int name);
 	bool showCocktails(int name);
 
+	std::string sformat(const char *fmt, ...);
+
 	extern std::map<std::string, SymbolInfo> SymbolInfos;
 
 	#ifndef max

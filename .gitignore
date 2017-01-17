@@ -7,5 +7,4 @@ TestDebugger1/
 *.opendb
 *.sdf
 *.suo
-ConnectionManager.cpp
-ConnectionManager.h
+FF_Anderson.VC.db

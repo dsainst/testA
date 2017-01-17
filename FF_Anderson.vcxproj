@@ -168,9 +168,7 @@
     <ClInclude Include="ActionManager.h" />
     <ClInclude Include="ffcTypes.h" />
     <ClInclude Include="NetWorker.h" />
-    <ClInclude Include="resource1.h" />
     <ClInclude Include="utils.h" />
-    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ActionManager.cpp" />

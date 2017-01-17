@@ -39,6 +39,21 @@ int ffc::getMasterTicket2(int magic) {
 	return res;
 }
 
+std::string ffc::sformat(const char *fmt, ...)
+{
+	char msg_buf[255];
+	try {
+		va_list ap;
+		va_start(ap, fmt);
+		vsprintf_s(msg_buf, 254, fmt, ap);
+		va_end(ap);
+	}
+	catch (...) {
+		return std::string("sformat error");
+	}
+	return std::string(msg_buf);
+}
+
 /// опируем строку с++ в MQLSting (на стороне MQL больше ничего делать не надо)
 void ffc::writeMqlString(MqlString dest, wchar_t* source) {
 	int len = min(wcslen(source), dest.size - 1);  //ќпредел€ем длину строки (небольше распределенного буфера)
