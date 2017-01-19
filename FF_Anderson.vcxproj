@@ -125,7 +125,7 @@
       <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;WIN32;NDEBUG;ZMQ_STATIC;_WINDOWS;_USRDLL;FFC_ANDERSON_EXPORTS;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_WCSTOK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>C:\dev\Mql4Copier\poco-1.6\Excpt;C:\dev\Mql4Copier\poco-1.6\Crypto\include;C:\dev\Mql4Copier\poco-1.6\Util\include;C:\dev\Mql4Copier\poco-1.6\NetSSL_OpenSSL\include;C:\dev\Mql4Copier\poco-1.6\Net\include;C:\dev\Mql4Copier\poco-1.6\Foundation\include;C:\Users\TomKein\Documents\GitHub\libzmq\include;C:\dev\Mql4Copier\libzmq\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\poco-1.6\Excpt;..\poco-1.6\Crypto\include;..\poco-1.6\Util\include;..\poco-1.6\NetSSL_OpenSSL\include;..\poco-1.6\Net\include;..\poco-1.6\Foundation\include;C:\Users\TomKein\Documents\GitHub\libzmq\include;..\libzmq\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
@@ -134,7 +134,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\dev\Mql4Copier\poco-1.6\lib;C:\dev\Mql4Copier\libzmq\bin\Win32\Release\v140_xp;C:\Users\TomKein\Documents\GitHub\libzmq\bin\Win32\Release\v140_xp\static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\poco-1.6\lib;..\libzmq\bin\Win32\Release\v140_xp;C:\Users\TomKein\Documents\GitHub\libzmq\bin\Win32\Release\v140_xp\static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;libeay32MT.lib;ssleay32MT.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;wsock32.lib;ws2_32.lib;Iphlpapi.lib;libzmq.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>Source.def</ModuleDefinitionFile>
       <AssemblyDebug>

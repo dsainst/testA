@@ -57,7 +57,7 @@
 
 #define PROVIDERS_COUNT				6
 
-#define TIME_CONNECT_BILLING		100
+#define TIME_CONNECT_BILLING		45 // в секундах
 
 #define PROJECT_URL	   "fairforex.org"
 #define EXPERT_NAME    "FFAnderson"
@@ -95,12 +95,12 @@ namespace ffc {
 
 	using json = nlohmann::json;
 
-	extern int			cocktail_id;
+	extern int			cocktail_fill;
 
 	extern json			mainPackage;
 	extern long			acc_number;
-	static bool			isStaticSended;
-	static bool			newCom			= 0;				//Если установлен, то сеанс вне расписания
+	//static bool			isStaticSended;
+	extern bool			newCom;				//Если установлен, то сеанс вне расписания
 	static int			serverStatus	= STATUS_NOT_INIT;		//Серверный статус разрешения торговли
 	static std::string	serverReason;		//Серверная причина статуса разрешения
 	static std::string	serverMessage;
@@ -135,13 +135,16 @@ namespace ffc {
 	};
 
 	static std::vector<int>				interestTickets;	//Тикеты интересных ордеров
+	extern std::vector<int>				cocktails;			//Провайдеры, в зависимости от коктейля
 
 	extern void			comSession();
 	static void			sendStaticInfo();
 	static void			setMyStatus();
 	int					updateAccountStep(TerminalS* TermInfo);
 
-	extern void			addOpenOrder(int _ticket, int _magic, std::string symbol, int _type, double _lots, double _openprice, double _tp, double _sl);
+	int					updateOrderClosed(int _ticket, int _type, int _magic, std::string _symbol, double _lots, __time64_t _opentime, double _openprice, double _tp, double _sl, __time64_t _closetime, double _closeprice, double _profit);
+
+	extern void			addOpenOrder(int _ticket, int _magic, std::string symbol, int _type, double _lots, double _openprice, __time64_t _opentime, double _tp, double _sl, int _provider);
 
 	static void			AnswerHandler(const nlohmann::json answer);
 	static void			reset();

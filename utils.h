@@ -12,7 +12,7 @@
 
 namespace ffc {
 
-	extern FfcMsg msg;
+	extern FfcMsg msgServer;
 	extern bool threadActive;
 	extern std::mutex mutex;
 

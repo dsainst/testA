@@ -3,7 +3,10 @@
 long ffc::acc_number = 0;
 bool ffc::isNetAllowed = true;
 ffc::json staticInfo;
-int			ffc::cocktail_id = 0;
+int ffc::cocktail_fill = 0;
+bool ffc::newCom = false;
+
+std::vector<int>				ffc::cocktails;
 
 void ffc::sendStaticInfo()
 {
@@ -12,8 +15,7 @@ void ffc::sendStaticInfo()
 	mainPackage["partnerID"] = PARTNER_ID;
 	mainPackage["advisorVersion"] = ADVISOR_VER;
 	mainPackage["accountInfo"] = staticInfo["acc"];
-	newCom = true;
-	isStaticSended = true;
+	//isStaticSended = true;
 
 	comSession();
 }
@@ -71,17 +73,59 @@ int ffc::updateAccountStep(TerminalS* TermInfo)
 	return 0;
 }
 
-void ffc::addOpenOrder(int _ticket, int _magic, std::string symbol, int _type, double _lots, double _openprice, double _tp, double _sl)
+int ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _symbol, double _lots, __time64_t _opentime, double _openprice, double _tp, double _sl, __time64_t _closetime, double _closeprice, double _profit)
+{
+	int next = 0;
+	//LOG_T("fxc_updateOrder: %d", _ticket);
+	auto itr = interestTickets.begin();
+	while (itr != interestTickets.end()) {
+		if (*itr == _ticket) {
+			if ((_type == 0 || _type == 1) && _closetime > 0) {  //Если ордер не найден на стороне mql его маркируем _type = -1
+				json order;
+				order["ticket"] = _ticket;
+				order["symbol"] = _symbol.c_str();
+				order["type"] = _type;
+				order["magic"] = _magic;
+				order["lots"] = _lots;
+				order["opentime"] = _opentime;
+				order["openprice"] = _openprice;
+				order["tpprice"] = _tp;
+				order["slprice"] = _sl;
+				order["closetime"] = _closetime;
+				order["closeprice"] = _closeprice;
+				order["profit"] = _profit;
+				mainPackage["closedOrders"].push_back(order);
+				//LOG_T("fxc::Core::updateOrder() order %d stored in json", _ticket);
+			}
+			itr = interestTickets.erase(itr);
+			//LOG_INFO("up co: " << _ticket << " - " << _closetime << "\r\n")
+			if (itr != interestTickets.end()) {
+				next = *itr;
+			}
+			else if (mainPackage.find("closedOrders") != mainPackage.end()) { //если есть что отослать, отсылаем
+			newCom = true;
+			}
+			break;
+		}
+		else { itr++; }
+	}
+	return next;
+}
+
+void ffc::addOpenOrder(int _ticket, int _magic, std::string _symbol, int _type, double _lots, double _openprice, __time64_t _opentime, double _tp, double _sl, int _provider)
 {
 	nlohmann::json order;
-	order["ticket"] = std::to_string(_ticket);
-	order["magic"] = std::to_string(_magic);
-	order["type"] = std::to_string(_type);
-	order["lots"] = std::to_string(_lots);
-	order["openprice"] = std::to_string(_openprice);
-	order["tpprice"] = std::to_string(_tp);
-	order["slprice"] = std::to_string(_sl);
-	order["symbol"] = symbol.c_str();
+	order["ticket"] = _ticket;
+	order["magic"] = _magic;
+	order["type"] = _type;
+	order["lots"] = _lots;
+	order["openprice"] = _openprice;
+	order["opentime"] = _opentime;
+	order["profit"] = 0;
+	order["tpprice"] = _tp;
+	order["slprice"] = _sl;
+	order["symbol"] = _symbol.c_str();
+	order["provider"] = _provider;
 	mainPackage["openOrders"].push_back(order);
 }
 
@@ -109,6 +153,7 @@ void ffc::comSession() {
 	mainPackage["accountEquity"] = accountEquity;
 	mainPackage["accountProfit"] = accountProfit;
 
+
 	msg = mainPackage.dump().c_str();
 	std::cout << "msg = " << msg << "\r\n";
 	mainPackage.clear();
@@ -122,7 +167,7 @@ void ffc::comSession() {
 		} else std::cout << "answer is empty!" << "\r\n";
 	}
 
-	std::cout << "ffc::ComSession() done" << "\r\n";
+	//std::cout << "ffc::ComSession() done" << "\r\n";
 }
 
 void ffc::AnswerHandler(const json answer)
@@ -174,21 +219,27 @@ void ffc::AnswerHandler(const json answer)
 		interestTickets.clear();
 		interestTickets = itr->get<std::vector<int>>();
 	}
+
 	itr = answer.find("checkSum");
 	if (itr != answer.end()) {
 		floatKey = itr->get<__int64>();
 	}
+
 	itr = answer.find("currentPattern");
 	if (itr != answer.end()) {
 		__int64 value = itr->get<__int64>();
 		expirationDate = value ^ floatKey;
 	}
+
 	itr = answer.find("cocktails");
 	if (itr != answer.end()) {
-		std::cout << "cocktails1"  << "\r\n";
 		json avr = itr.value();
-		std::cout << "cocktails2" << "\r\n";
-		std::cout << "cocktails3" << avr["providers"] << "\r\n";
+		auto itr2 = avr.find("providers");
+		if (itr2 != avr.end()) {
+			cocktails.clear();
+			cocktails = itr2->get<std::vector<int>>();
+			cocktail_fill = 1;
+		} else std::cout << "providers is not found! " << "\r\n";
 	}
 	if (statusUpdate) {
 		if (serverStatus == STATUS_OK) {
@@ -229,7 +280,7 @@ void ffc::reset() {
 	newCom = false;
 	lastSession = 0;		//Время последнего сеанса
 	sessionPeriod = MAIN_SESSION_PERIOD;
-	isStaticSended = false;
+	//isStaticSended = false;
 
 	accountNumber = 0;
 	advisorID = 0;
@@ -283,12 +334,11 @@ std::string ffc::send(const std::string msg) {
 		form.set("accountCompany", accountCompany.c_str());
 		form.set("serverKey", serverKey.c_str());
 		form.set("codePage", std::to_string(GetACP()));
-		if (!cocktail_id)
+		if (!cocktail_fill)
 			form.set("needCocktail", std::to_string(4));
 		form.set("data", msg.c_str());
-		std::cout << "form number = " << accountNumber << "\r\n";
-		std::cout << "form accountCompany = " << accountCompany << "\r\n";
-		std::cout << "form currency = " << accountCurrency << "\r\n";
+		std::cout << "account number = " << accountNumber << "\r\n";
+		std::cout << "account Company = " << accountCompany << "\r\n";
 		form.prepareSubmit(req);
 
 		form.write(client_session.sendRequest(req));

@@ -15,7 +15,7 @@ void* context;
 void* request;
 int ffc::validOrder;
 int ffc::updateOrder;
-FfcMsg ffc::msg = { 0 };
+FfcMsg ffc::msgServer = { 0 };
 bool ffc::threadActive = false;
 std::mutex ffc::mutex;
 
@@ -92,10 +92,10 @@ void ffc::zmqReceiveOrders() {
 	zmq_msg_recv(&reply, request, 0);
 	int totalMSG = zmq_msg_size(&reply);
 	mutex.lock();
-	memcpy(&msg, zmq_msg_data(&reply), totalMSG);
+	memcpy(&msgServer, zmq_msg_data(&reply), totalMSG);
 	mutex.unlock();
 	std::wcout << "Receiver size order - " << totalMSG << ". \r\n";
-	std::wcout << "Received: valid = " << msg.validation << " count = " << msg.ordersCount << "\r\n";
+	std::wcout << "Received: valid = " << msgServer.validation << " count = " << msgServer.ordersCount << "\r\n";
 	zmq_msg_close(&reply);
 	threadActive = false;
 }

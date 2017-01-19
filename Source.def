@@ -7,3 +7,4 @@ ffc_RDeInit
 ffc_RSetParam
 ffc_RHistoryUpdate
 ffc_RInitSymbols
+ffc_RClosedUpdate
