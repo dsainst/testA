@@ -30,7 +30,6 @@ double balance = 0;
 //---------- Основные параметры -----------------
 int			masterTickets[MAX_ORDER_COUNT];
 bool		recieverInit = false;
-int			id_cocktails = 0;
 //double		stoploss = 0;
 double		procent = 0.02; // процент просирания
 double		max_fail = 0; // максимальная сумма, которую не жалко просрать
@@ -70,6 +69,8 @@ namespace ffc {
 		setAccount();
 		updateAccountStep(&TermInfo[0]); 
 		comSession();
+
+		// запускаем таймер для связи с биллингом
 		time_t timer;
 		struct tm y2k = { 0 };
 
@@ -85,13 +86,11 @@ namespace ffc {
 
 		initActions(action_array, length);
 
-		id_cocktails = initCocktails(acc_number); //751137852
-
 		if (procentic < 0.1)
 			procent = procentic;
 
 		std::wcout << "acc_number = " << acc_number << " procent_ = " << procentic << "\r\n";
-		std::wcout << "Receiver inited.v3. Cocktails id = " << id_cocktails << "\r\n";
+		std::wcout << "Receiver inited.v3.1 \r\n";
 		return true; //Инициализация успешна
 	}
 
@@ -206,12 +205,10 @@ namespace ffc {
 		double slprice_min[2]	= { 0, 0 };
 		double slprice_max[2]	= { 0, 0 };
 		ordersTotal = msgServer.ordersCount;
-		//std::wcout << "zmqReceiveOrders - " << msgServer.ordersCount << " ordersRCount - " << ordersRCount << "\r\n";
+		//std::wcout << "zmqReceiveOrders - " << msgServer.ordersCount << " ordersRCount - " << ordersRCount << " ordersTotal - " << ordersTotal << "\r\n";
 		for (int master_index = 0; master_index < ordersTotal; master_index++) {
 			auto master_order = msgServer.orders + master_index;
-			/*if (id_cocktails == 0 || getCocktails(master_order->magic, id_cocktails) == 0) {
-				continue;
-			}*/
+			//std::wcout << "ticket is not found1 - " << master_order->ticket << " \r\n";
 
 			//для поиска нужного тикета
 			providerOk = false;
@@ -219,8 +216,8 @@ namespace ffc {
 			for (int i = 0; i < vector_size; i++) {
 				if (master_order->magic == cocktails[i] || master_order->magic == 1) {
 					providerOk = true;
-					break;
-					//std::cout << cocktails[i] << " - " << master_order->magic << std::endl;
+					//break;
+					//std::cout << cocktails[i] << " - " << master_order->magic << " - " << i << std::endl;
 				}
 			}
 			if (vector_size == 0) {
@@ -298,7 +295,7 @@ namespace ffc {
 						if (!(client_order->slprice && (mpc[client_order->type] - client_order->slprice)*sign[client_order->type] <= stoplevel))
 							modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
 
-					break;
+					//break;
 				}
 			}
 			if (!found) {

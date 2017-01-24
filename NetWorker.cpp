@@ -313,7 +313,7 @@ public:
 	~SSLInitializer() { Poco::Net::uninitializeSSL(); }
 };
 
-std::string ffc::send(const std::string msg) {
+std::string ffc::send(const std::string _msg) {
 	//tracer;
 	try {
 		SSLInitializer sslInitializer;
@@ -336,7 +336,7 @@ std::string ffc::send(const std::string msg) {
 		form.set("codePage", std::to_string(GetACP()));
 		if (!cocktail_fill)
 			form.set("needCocktail", std::to_string(4));
-		form.set("data", msg.c_str());
+		form.set("data", _msg.c_str());
 		std::cout << "account number = " << accountNumber << "\r\n";
 		std::cout << "account Company = " << accountCompany << "\r\n";
 		form.prepareSubmit(req);

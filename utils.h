@@ -3,12 +3,7 @@
 #include <map>
 #include "ffcTypes.h"
 
-#pragma pack(push,1)
-#define TIM_COOK        1
-#define BILL_GATES      2
-#define V_PUTIN			3
-#define W_BUFFETT		4
-#pragma pack(pop,1)
+
 
 namespace ffc {
 
@@ -26,10 +21,6 @@ namespace ffc {
 	std::string WC2MB(const wchar_t* line);
 	void zmqReceiveOrders();
 	void deInitZMQ();
-	int initCocktails(long acc_number);
-	bool getCocktails(int provider, int name);
-	//int* setCocktails(int provider[], int name);
-	bool showCocktails(int name);
 
 	std::string sformat(const char *fmt, ...);
 

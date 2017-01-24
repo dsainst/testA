@@ -54,7 +54,7 @@ std::string ffc::sformat(const char *fmt, ...)
 	return std::string(msg_buf);
 }
 
-///Копируем строку с++ в MQLSting (на стороне MQL больше ничего делать не надо)
+// Копируем строку с++ в MQLSting (на стороне MQL больше ничего делать не надо)
 void ffc::writeMqlString(MqlString dest, wchar_t* source) {
 	int len = min(wcslen(source), dest.size - 1);  //Определяем длину строки (небольше распределенного буфера)
 	wcscpy_s(dest.buffer, len + 1, source);  //Копируем включая терминирующий ноль
@@ -103,38 +103,4 @@ void ffc::zmqReceiveOrders() {
 void ffc::deInitZMQ() {
 	zmq_close(request);
 	zmq_ctx_destroy(context);
-}
-
-
-//cюда нужно получить инфу об уже имеющихся счетах и коктейлях
-int ffc::initCocktails(long acc_number) {
-	std::wcout << "account number: " << acc_number << "\r\n";
-	// запрос на сервер, к какому коктейлю привязан аккаунт, пока забил вручную
-	//if (acc_number == 1732282 || acc_number == 751137852) { // 751137852 - demo
-	return TIM_COOK;
-	//}
-	return false;
-}
-
-
-bool ffc::getCocktails(int provider, int name) {
-	switch (name) {
-	case TIM_COOK:
-		if (provider == 1593142 || provider == 1627564 || provider == 1346753 || provider == 1555139) return true;
-		break;
-	case BILL_GATES:
-		if (provider == 500) return true;
-		break;
-	case V_PUTIN:
-		if (provider == 1593142) return true;
-		break;
-	}
-	return false;
-}
-
-
-
-bool ffc::showCocktails(int name) {
-
-	return false;
 }
