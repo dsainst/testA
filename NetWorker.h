@@ -18,8 +18,6 @@
 
 #include <Poco/Util/WinRegistryKey.h>
 
-
-
 #pragma pack(push,1)
 #define bill_server "https://api.fairforex.org/" //index.php?r=site/test
 //work statuses
@@ -29,9 +27,8 @@
 #define STATUS_SOFT_BREAK		2
 #define STATUS_HARD_BREAK		3
 #define STATUS_EMERGENCY_BREAK	4
-#define MAIN_SESSION_PERIOD	60
-#define DEFAULT_SERVER_KEY	"Promo2017"
-#define DEFAULT_INIT_REASON	"not initialized"
+#define MAIN_SESSION_PERIOD		60
+#define DEFAULT_INIT_REASON		"not initialized"
 #define DEFAULT_COMPANY_NAME	"FFAnderson"
 
 #define SYMBOL_MAX_LENGTH		255
@@ -39,35 +36,17 @@
 #define BASE_KEY64		0x70A12283F4B536C7
 #define EXPIRATION_LIMIT 3*24*60*60
 
-//work statuses
-#define STATUS_NOT_INIT			-1
-#define STATUS_OK				0
-#define STATUS_DANGER			1
-#define STATUS_SOFT_BREAK		2
-#define STATUS_HARD_BREAK		3
-#define STATUS_EMERGENCY_BREAK	4
+#define TIME_CONNECT_BILLING		9		// время в секундах - через которое идет коннект с биллингом
+#define COCKTAIL_ID					8		// id коктейля
 
-//Errors and status providers
-#define PROVIDER_BASE_OK			0
-#define PROVIDER_PERMISSION			1
-#define PROVIDER_AUTOTRADE			2
-#define PROVIDER_VERSION_MATCH		3
-#define PROVIDER_CHECK_PARAMS		4
-#define PROVIDER_PARSE_SYMBOL		5
-
-#define PROVIDERS_COUNT				6
-
-#define TIME_CONNECT_BILLING		45 // в секундах
 
 #define PROJECT_URL	   "fairforex.org"
 #define EXPERT_NAME    "FFAnderson"
 #define MAGIC_EA		0x70004000
 #define PARTNER_ID		""//YrDm6Gp-SKLF5fQDUDoD"
 
-#define EXPERT_VERSION "1.016"
 #define ADVISOR_VER		1016
 #define ADVISOR_ID		4
-#define COCKTAIL		0   //0 - server defined
 
 struct TerminalS
 {

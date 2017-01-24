@@ -131,14 +131,23 @@ namespace ffc {
 		Info->trade_allowed = trade_allowed;
 	}
 
-	void ffc_RHistoryUpdate(int orderMagic, int orderTicket, __time64_t orderCloseTime, double orderClosePrice, int orderType, wchar_t* orderSymbol, double orderLots, double orderOpenPrice, __time64_t orderOpenTime, double orderTp, double orderSl) {
+	void ffc_RHistoryUpdate(int orderMagic, int orderTicket, __time64_t orderCloseTime, double orderClosePrice, int orderType, wchar_t* orderSymbol, double orderLots, double orderOpenPrice, __time64_t orderOpenTime, double orderTp, double orderSl, double orderSwap, double orderCom, double orderProf) {
 		mHistoryTickets[ordersCountHistory] = getMasterTicket2(orderMagic);
 		ordersCountHistory++;
-		updateOrderClosed(orderTicket, orderType, orderMagic, WC2MB(orderSymbol), orderLots, orderOpenTime, orderOpenPrice, orderTp, orderSl, orderCloseTime, orderClosePrice, 0);
+		updateOrderClosed(orderTicket, orderType, orderMagic, WC2MB(orderSymbol), orderLots, orderOpenTime, orderOpenPrice, orderTp, orderSl, orderCloseTime, orderClosePrice, orderSwap + orderCom + orderProf);
 	}
 
-	void ffc_RClosedUpdate(int orderMagic, int orderTicket, __time64_t orderCloseTime, double orderClosePrice, int orderType, wchar_t* orderSymbol, double orderLots, double orderOpenPrice, __time64_t orderOpenTime, double orderTp, double orderSl) {
-		updateOrderClosed(orderTicket, orderType, orderMagic, WC2MB(orderSymbol), orderLots, orderOpenTime, orderOpenPrice, orderTp, orderSl, orderCloseTime, orderClosePrice, 0);
+	void ffc_RClosedUpdate(int orderMagic, int orderTicket, __time64_t orderCloseTime, double orderClosePrice, int orderType, wchar_t* orderSymbol, double orderLots, double orderOpenPrice, __time64_t orderOpenTime, double orderTp, double orderSl, double orderSwap, double orderCom, double orderProf) {
+		updateOrderClosed(orderTicket, orderType, orderMagic, WC2MB(orderSymbol), orderLots, orderOpenTime, orderOpenPrice, orderTp, orderSl, orderCloseTime, orderClosePrice, orderSwap + orderCom + orderProf);
+	}
+
+	int ffc_RInterestTickets() {
+		auto itr = interestTickets.begin();
+		while (itr != interestTickets.end()) {
+			std::cout << "interestTickets = " << *itr << "\r\n";
+			itr++;
+		}
+		return 0;
 	}
 
 	int ffc_ROrdersUpdate(int ROrderTicket, int Rmagic, wchar_t* ROrderSymbol, int RorderType,
@@ -164,7 +173,7 @@ namespace ffc {
 			auto order = &client_orders[key];
 			addOpenOrder(order->ticket, order->magic, WC2MB(order->symbol), order->type, order->lots, order->openprice, order->opentime, order->tpprice, order->slprice, 0);
 			key++;
-			std::cout << "order->ticket=" << order->ticket << "\r\n";
+			std::cout << "send order->ticket=" << order->ticket << "\r\n";
 		}
 		//std::cout << "send to billing" << "\r\n";
 		comSession();
@@ -216,7 +225,7 @@ namespace ffc {
 			for (int i = 0; i < vector_size; i++) {
 				if (master_order->magic == cocktails[i] || master_order->magic == 1) {
 					providerOk = true;
-					//break;
+					break;
 					//std::cout << cocktails[i] << " - " << master_order->magic << " - " << i << std::endl;
 				}
 			}
@@ -267,22 +276,25 @@ namespace ffc {
 						}
 						else {
 							if (client_order->slprice >= slprice_max[OP_SELL]) {
+								if (client_order->slprice == slprice_max[OP_SELL]) SL = slprice_max[OP_SELL]; else
 								if (!(slprice_max[OP_SELL] && (mpc[client_order->type] - slprice_max[OP_SELL])*sign[client_order->type] <= stoplevel))
 									SL = slprice_max[OP_SELL];
 							} // иначе стоит максимум безубытка, поэтому ничего не трогаем
 						}
 					}
 					else { // buy  //сдвиг -3 +1
+						//std::cout << "client ticket = " << client_order->ticket  << "master slprice = " << master_order->slprice << " client slprice = " << client_order->slprice << " slprice = " << SL << " max = " << slprice_max[OP_BUY] << " min = " << slprice_min[OP_BUY] << "\r\n";
 						if (master_order->slprice != 0 && ((master_order->slprice > SL && master_order->slprice < slprice_min[OP_BUY]) || (master_order->slprice > slprice_max[OP_BUY]))) {
 							SL = master_order->slprice;
-
 						}
-						else {
+						else { // устанавливаем свой SL
 							if (client_order->slprice <= slprice_max[OP_BUY]) {
+								if (client_order->slprice == slprice_max[OP_BUY]) SL = slprice_max[OP_BUY]; else
 								if (!(slprice_max[OP_BUY] && (mpc[client_order->type] - slprice_max[OP_BUY])*sign[client_order->type] <= stoplevel)) {
 									SL = slprice_max[OP_BUY];
 								}
-							} // иначе стоит максимум безубытка, поэтому ничего не трогаем
+							}
+								
 						}
 					}
 
@@ -306,19 +318,22 @@ namespace ffc {
 					if (mHistoryTickets[history_index] == master_order->ticket) {
 						history_create = true;
 						ticket_temp = mHistoryTickets[history_index];
-						std::wcout << "ticket is master_order->ticket - " << master_order->ticket << "\r\n";
+						//std::wcout << "ticket is master_order->ticket - " << master_order->ticket << "\r\n";
 					}
 					//std::cout << "ticket_temp = " << mHistoryTickets[history_index] << " ticket_master - " << master_order->ticket << " magic_master - " << master_order->magic << "\r\n";
 					//std::wcout << "history_index - " << history_index  << " mHistoryTickets - " << mHistoryTickets[history_index] << " master_order->ticket - " << master_order->ticket << "\r\n";
 				}
 				if (!history_create) {
-					std::wcout << "master_order->ticket - " << master_order->ticket << "\r\n";
+					//std::wcout << "master_order->ticket - " << master_order->ticket << "\r\n";
 					mHistoryTickets[ordersCountHistory] = master_order->ticket;
 					ordersCountHistory++;
 					master_order->lots = balance / master_order->lots;
 					createOrder(master_order);
 					newCom = true;
-				} else std::wcout << "this ticket is closed - " << ticket_temp << "\r\n";
+				}
+				else { // тикет был найден в истории, был закрыт скорее всего вручную, нужно передать закрытие в биллинг
+					//std::wcout << "this ticket is closed - " << ticket_temp << "\r\n";
+				}
 			}
 			master_order = 0;
 		}

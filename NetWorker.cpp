@@ -76,7 +76,6 @@ int ffc::updateAccountStep(TerminalS* TermInfo)
 int ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _symbol, double _lots, __time64_t _opentime, double _openprice, double _tp, double _sl, __time64_t _closetime, double _closeprice, double _profit)
 {
 	int next = 0;
-	//LOG_T("fxc_updateOrder: %d", _ticket);
 	auto itr = interestTickets.begin();
 	while (itr != interestTickets.end()) {
 		if (*itr == _ticket) {
@@ -95,10 +94,8 @@ int ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _symb
 				order["closeprice"] = _closeprice;
 				order["profit"] = _profit;
 				mainPackage["closedOrders"].push_back(order);
-				//LOG_T("fxc::Core::updateOrder() order %d stored in json", _ticket);
 			}
 			itr = interestTickets.erase(itr);
-			//LOG_INFO("up co: " << _ticket << " - " << _closetime << "\r\n")
 			if (itr != interestTickets.end()) {
 				next = *itr;
 			}
@@ -155,7 +152,7 @@ void ffc::comSession() {
 
 
 	msg = mainPackage.dump().c_str();
-	std::cout << "msg = " << msg << "\r\n";
+	//std::cout << "msg = " << msg << "\r\n";
 	mainPackage.clear();
 	response = send(msg);
 	if (response != "") {
@@ -215,7 +212,7 @@ void ffc::AnswerHandler(const json answer)
 
 	itr = answer.find("interestTickets");
 	if (itr != answer.end()) {
-		//LOG_INFO("start update interestTickers...")
+		std::cout << "start update interestTickers...\r\n";
 		interestTickets.clear();
 		interestTickets = itr->get<std::vector<int>>();
 	}
@@ -335,10 +332,10 @@ std::string ffc::send(const std::string _msg) {
 		form.set("serverKey", serverKey.c_str());
 		form.set("codePage", std::to_string(GetACP()));
 		if (!cocktail_fill)
-			form.set("needCocktail", std::to_string(4));
+			form.set("needCocktail", std::to_string(COCKTAIL_ID));
 		form.set("data", _msg.c_str());
-		std::cout << "account number = " << accountNumber << "\r\n";
-		std::cout << "account Company = " << accountCompany << "\r\n";
+		//std::cout << "account number = " << accountNumber << "\r\n";
+		//std::cout << "account Company = " << accountCompany << "\r\n";
 		form.prepareSubmit(req);
 
 		form.write(client_session.sendRequest(req));

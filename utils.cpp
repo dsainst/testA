@@ -8,8 +8,8 @@
 #include <atomic>
 #include <iostream>
 
-//#define SERVER_ADDR "tcp://212.116.110.46:8083"
-#define SERVER_ADDR "tcp://127.0.0.1:8083"
+#define SERVER_ADDR "tcp://212.116.110.46:8083"
+//#define SERVER_ADDR "tcp://127.0.0.1:8083"
 
 void* context;
 void* request;

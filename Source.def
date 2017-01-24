@@ -8,3 +8,4 @@ ffc_RSetParam
 ffc_RHistoryUpdate
 ffc_RInitSymbols
 ffc_RClosedUpdate
+ffc_RInterestTickets
