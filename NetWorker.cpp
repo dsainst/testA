@@ -7,6 +7,7 @@ int ffc::cocktail_fill = 0;
 bool ffc::newCom = false;
 
 std::vector<int>				ffc::cocktails;
+std::vector<int>				ffc::interestClosedTickets;
 
 void ffc::sendStaticInfo()
 {
@@ -214,7 +215,9 @@ void ffc::AnswerHandler(const json answer)
 	if (itr != answer.end()) {
 		std::cout << "start update interestTickers...\r\n";
 		interestTickets.clear();
+		interestClosedTickets.clear();
 		interestTickets = itr->get<std::vector<int>>();
+		interestClosedTickets = itr->get<std::vector<int>>();
 	}
 
 	itr = answer.find("checkSum");

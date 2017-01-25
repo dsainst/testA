@@ -142,12 +142,15 @@ namespace ffc {
 	}
 
 	int ffc_RInterestTickets() {
-		auto itr = interestTickets.begin();
-		while (itr != interestTickets.end()) {
-			std::cout << "interestTickets = " << *itr << "\r\n";
-			itr++;
-		}
-		return 0;
+		int ticket_;
+		auto itr = interestClosedTickets.begin();
+		if (itr != interestClosedTickets.end()) {
+			std::cout << "interestClosedTickets = " << *itr << "\r\n";
+			ticket_ = *itr;
+			interestClosedTickets.erase(interestClosedTickets.begin());
+		} else return 0;
+		return ticket_;
+		//interestTickets.clear();
 	}
 
 	int ffc_ROrdersUpdate(int ROrderTicket, int Rmagic, wchar_t* ROrderSymbol, int RorderType,

@@ -36,7 +36,7 @@
 #define BASE_KEY64		0x70A12283F4B536C7
 #define EXPIRATION_LIMIT 3*24*60*60
 
-#define TIME_CONNECT_BILLING		9		// врем€ в секундах - через которое идет коннект с биллингом
+#define TIME_CONNECT_BILLING		900		// врем€ в секундах - через которое идет коннект с биллингом
 #define COCKTAIL_ID					8		// id коктейл€
 
 
@@ -114,6 +114,7 @@ namespace ffc {
 	};
 
 	static std::vector<int>				interestTickets;	//“икеты интересных ордеров
+	extern std::vector<int>				interestClosedTickets;	//“икеты интересных закрытых ордеров
 	extern std::vector<int>				cocktails;			//ѕровайдеры, в зависимости от коктейл€
 
 	extern void			comSession();
