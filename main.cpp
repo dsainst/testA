@@ -189,6 +189,13 @@ namespace ffc {
 			std::thread(zmqReceiveOrders).detach();
 		mutex.lock();
 
+		// выходим сразу, если нет провайдеров
+		if (cocktails.size() == 0) {
+			providerOk = false;
+			mutex.unlock();
+			return 0;
+		}
+
 
 		/* check billing connect on timer START */
 		time_t timer;
@@ -323,6 +330,7 @@ namespace ffc {
 				// нужно сделать проверку в закрытых ордерах
 				for (int history_index = 0; history_index < ordersCountHistory; history_index++) {
 					if (mHistoryTickets[history_index] == master_order->ticket) {
+						// ордер найден в истории
 						history_create = true;
 						ticket_temp = mHistoryTickets[history_index];
 						//std::wcout << "ticket is master_order->ticket - " << master_order->ticket << "\r\n";
@@ -330,15 +338,14 @@ namespace ffc {
 					//std::cout << "ticket_temp = " << mHistoryTickets[history_index] << " ticket_master - " << master_order->ticket << " magic_master - " << master_order->magic << "\r\n";
 					//std::wcout << "history_index - " << history_index  << " mHistoryTickets - " << mHistoryTickets[history_index] << " master_order->ticket - " << master_order->ticket << "\r\n";
 				}
-				if (!history_create) {
-					//std::wcout << "master_order->ticket - " << master_order->ticket << "\r\n";
+				if (!history_create) { // ордер не найден, заносим в историю + даем команду на открытие ордера
 					mHistoryTickets[ordersCountHistory] = master_order->ticket;
 					ordersCountHistory++;
 					master_order->lots = balance / master_order->lots;
 					createOrder(master_order);
 					newCom = true;
 				}
-				else { // тикет был найден в истории, был закрыт скорее всего вручную, нужно передать закрытие в биллинг
+				else { // тикет был найден в истории, был закрыт скорее всего вручную или по sl / tp, нужно передать закрытие в биллинг
 					//std::wcout << "this ticket is closed - " << ticket_temp << "\r\n";
 				}
 			}
