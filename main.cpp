@@ -111,7 +111,7 @@ namespace ffc {
 			wcscpy_s(TermInfo[0].server, SYMBOL_MAX_LENGTH, server);
 		}
 		catch (const std::exception&) { std::cout << "Dll is not inited!!!" << "\r\n"; }
-
+		balance = Rbalance;
 		max_fail = procent * Rbalance;
 	}
 
@@ -216,6 +216,7 @@ namespace ffc {
 		double stoplevel		= 0;
 		double slprice_min[2]	= { 0, 0 };
 		double slprice_max[2]	= { 0, 0 };
+		double digits[6] = { 0, 0.1, 0.01, 0.001, 0.0001, 0.00001 };
 		ordersTotal = msgServer.ordersCount;
 		//std::wcout << "zmqReceiveOrders - " << msgServer.ordersCount << " ordersRCount - " << ordersRCount << " ordersTotal - " << ordersTotal << "\r\n";
 		for (int master_index = 0; master_index < ordersTotal; master_index++) {
@@ -271,6 +272,8 @@ namespace ffc {
 
 					deltaSL = max_fail / (Info->tick_value * client_order->lots);
 					SL = (client_order->type) ? client_order->openprice + (deltaSL * Info->points) : client_order->openprice - (deltaSL * Info->points);
+					//std::wcout << "client_order->type - " << client_order->type << " client_order->openprice - " << client_order->openprice << " deltaSL - " << deltaSL << " Info->points - " << Info->points << "\r\n";
+					//std::wcout << "digits - " << Info->digits << " SL - " << SL << "\r\n";
 					//std::wcout << "SymbolInfos deltaSL - " << deltaSL << " SymbolInfos SL - " << SL << "\r\n";
 
 					if (client_order->type) { // sell // сдвиг в 0 надо сделать +3 -1
@@ -301,15 +304,16 @@ namespace ffc {
 						}
 					}
 
-					//std::wcout << "SymbolInfos deltaSL - " << deltaSL << " SymbolInfos SL - " << SL << "\r\n";
+					//std::wcout << "SymbolInfos digits - " << digits[(int)Info->digits] << " Info->digits+1 - " << Info->digits << "\r\n";
 
 					takep = client_order->tpprice;
-					if (abs(master_order->tpprice - client_order->tpprice) > POINT) takep = master_order->tpprice;
+					if (abs(master_order->tpprice - client_order->tpprice) > digits[(int)Info->digits]) takep = master_order->tpprice;
 
-					if (abs(SL - client_order->slprice) > POINT || abs(takep - client_order->tpprice) > POINT)
-						if (!(client_order->slprice && (mpc[client_order->type] - client_order->slprice)*sign[client_order->type] <= stoplevel))
+					if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) {
+						if (!(client_order->slprice && (mpc[client_order->type] - client_order->slprice)*sign[client_order->type] <= stoplevel)) {
 							modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
-
+						}
+					}
 					//break;
 				}
 			}
