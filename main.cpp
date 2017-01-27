@@ -48,6 +48,8 @@ double billingTimerUpdate = 0;
 
 TerminalS	TermInfo[1] = { 0 };
 
+bool history_update;
+
 nlohmann::json ffc::mainPackage;
 #pragma pack(pop,1)
 
@@ -64,6 +66,7 @@ namespace ffc {
 		acc_number = login;
 		ordersRCount = 0;
 		recieverInit = true;
+		history_update = false;
 
 		/* связь с биллингом НАЧАЛО ------------------------->>>>>>>>>  */
 		setAccount();
@@ -164,6 +167,11 @@ namespace ffc {
 
 		masterTickets[ordersRCount] = getMasterTicket2(Rmagic);
 
+		if (!history_update) {
+			mHistoryTickets[ordersCountHistory] = getMasterTicket2(Rmagic);
+			ordersCountHistory++;
+		}// добавляем в историю открытые ордера, чтобы при закрытии их вручную или по sl/tp они не открывались заново
+
 		//std::wcout << "Rmagic " << Rmagic << "\r\n";
 		ordersRCount++;
 		return ordersRCount;
@@ -185,6 +193,7 @@ namespace ffc {
 
 	int ffc_RGetJob() {
 		resetActions();
+		if (!history_update) history_update = true;
 		if (!threadActive)
 			std::thread(zmqReceiveOrders).detach();
 		mutex.lock();
@@ -316,8 +325,8 @@ namespace ffc {
 					takep = client_order->tpprice;
 					if (abs(master_order->tpprice - client_order->tpprice) > digits[(int)Info->digits]) takep = master_order->tpprice;
 
-					if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) {
-						if (!(client_order->slprice && (mpc[client_order->type] - client_order->slprice)*sign[client_order->type] <= stoplevel)) {
+					if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) { // если tp или sl был изменен
+						if (!(SL && (mpc[client_order->type] - SL)*sign[client_order->type] <= stoplevel)) {
 							modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
 						}
 					}

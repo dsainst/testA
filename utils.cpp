@@ -8,14 +8,14 @@
 #include <atomic>
 #include <iostream>
 
-//#define SERVER_ADDR "tcp://212.116.110.46:8083"
-#define SERVER_ADDR "tcp://127.0.0.1:8083"
+#define SERVER_ADDR "tcp://212.116.110.46:8083"
+//#define SERVER_ADDR "tcp://127.0.0.1:8083"
 
 void* context;
 void* request;
 int ffc::validOrder;
 int ffc::updateOrder;
-FfcMsg ffc::msgServer = { 0 };
+FfcMsg ffc::msgServer;
 bool ffc::threadActive = false;
 std::mutex ffc::mutex;
 
@@ -92,6 +92,7 @@ void ffc::zmqReceiveOrders() {
 	zmq_msg_recv(&reply, request, 0);
 	int totalMSG = zmq_msg_size(&reply);
 	mutex.lock();
+	msgServer = {};
 	memcpy(&msgServer, zmq_msg_data(&reply), totalMSG);
 	mutex.unlock();
 	std::wcout << "Receiver size order - " << totalMSG << ". \r\n";

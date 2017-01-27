@@ -93,7 +93,7 @@ int ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _symb
 				order["slprice"] = _sl;
 				order["closetime"] = _closetime;
 				order["closeprice"] = _closeprice;
-				order["profit"] = 0;
+				order["profit"] = _profit;
 				mainPackage["closedOrders"].push_back(order);
 			}
 			itr = interestTickets.erase(itr);
