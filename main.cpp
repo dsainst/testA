@@ -297,12 +297,17 @@ namespace ffc {
 							SL = master_order->slprice;
 						}
 						else {
-							if (client_order->slprice >= slprice_max[OP_SELL]) {
-								if (client_order->slprice == slprice_max[OP_SELL]) SL = slprice_max[OP_SELL]; else
-								if (!(slprice_max[OP_SELL] && (mpc[client_order->type] - slprice_max[OP_SELL])*sign[client_order->type] <= stoplevel))
+							if (client_order->slprice > slprice_max[OP_SELL]) {
+								if (!(slprice_max[OP_SELL] && (mpc[client_order->type] - slprice_max[OP_SELL])*sign[client_order->type] <= stoplevel)) {
 									SL = slprice_max[OP_SELL];
-							} // иначе стоит максимум безубытка, поэтому ничего не трогаем
+								}
+
+							}
+							else if (abs(client_order->slprice - slprice_max[OP_SELL]) <= digits[(int)Info->digits]) {
+									SL = slprice_max[OP_SELL];
+							}// иначе стоит максимум безубытка, поэтому ничего не трогаем
 						}
+						//std::cout << "client ticket = " << client_order->ticket << "master slprice = " << master_order->slprice << " client slprice = " << client_order->slprice << " SL = " << SL << " max = " << slprice_max[OP_SELL] << " min = " << slprice_min[OP_SELL] << "\r\n";
 					}
 					else { // buy  //сдвиг -3 +1
 						//std::cout << "client ticket = " << client_order->ticket  << "master slprice = " << master_order->slprice << " client slprice = " << client_order->slprice << " slprice = " << SL << " max = " << slprice_max[OP_BUY] << " min = " << slprice_min[OP_BUY] << "\r\n";
@@ -310,13 +315,14 @@ namespace ffc {
 							SL = master_order->slprice;
 						}
 						else { // устанавливаем свой SL
-							if (client_order->slprice <= slprice_max[OP_BUY]) {
-								if (client_order->slprice == slprice_max[OP_BUY]) SL = slprice_max[OP_BUY]; else
+							if (client_order->slprice < slprice_max[OP_BUY]) {
 								if (!(slprice_max[OP_BUY] && (mpc[client_order->type] - slprice_max[OP_BUY])*sign[client_order->type] <= stoplevel)) {
 									SL = slprice_max[OP_BUY];
 								}
 							}
-								
+							else if (abs(client_order->slprice - slprice_max[OP_BUY]) <= digits[(int)Info->digits]) {
+									SL = slprice_max[OP_BUY];
+							}// иначе стоит максимум безубытка, поэтому ничего не трогаем
 						}
 					}
 
