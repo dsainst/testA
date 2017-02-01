@@ -36,8 +36,9 @@
 #define BASE_KEY64		0x70A12283F4B536C7
 #define EXPIRATION_LIMIT 3*24*60*60
 
-#define TIME_CONNECT_BILLING		900		// врем€ в секундах - через которое идет коннект с биллингом
-#define COCKTAIL_ID					8		// id коктейл€
+#define TIME_CONNECT_BILLING				900			// врем€ в секундах - через которое идет коннект с биллингом
+#define TIME_CONNECT_BILLING_UNAUTHORIZED	60			// таймер проверки неавторизованных пользователей
+#define COCKTAIL_ID							1			// id коктейл€
 
 
 #define PROJECT_URL	   "fairforex.org"
@@ -75,6 +76,7 @@ namespace ffc {
 	using json = nlohmann::json;
 
 	extern int			cocktail_fill;
+	extern bool			workStop;
 
 	extern json			mainPackage;
 	extern long			acc_number;
@@ -119,7 +121,6 @@ namespace ffc {
 
 	extern void			comSession();
 	static void			sendStaticInfo();
-	static void			setMyStatus();
 	int					updateAccountStep(TerminalS* TermInfo);
 
 	int					updateOrderClosed(int _ticket, int _type, int _magic, std::string _symbol, double _lots, __time64_t _opentime, double _openprice, double _tp, double _sl, __time64_t _closetime, double _closeprice, double _profit);

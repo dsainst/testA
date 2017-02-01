@@ -98,6 +98,34 @@ namespace ffc {
 		return true; //»нициализаци€ успешна
 	}
 
+	bool ffc_Rworkout() {
+		if (workStop) {
+			// надо запустить таймер, чтобы провер€л соединение с сервером (раз в минуту)
+			/* check billing connect on timer START */
+			time_t timer;
+			struct tm y2k = { 0 };
+			double seconds;
+
+			y2k.tm_hour = 0;   y2k.tm_min = 0; y2k.tm_sec = 0;
+			y2k.tm_year = 100; y2k.tm_mon = 0; y2k.tm_mday = 1;
+
+			time(&timer);  /* get current time; same as: timer = time(NULL)  */
+
+			seconds = difftime(timer, mktime(&y2k));
+
+			//std::cout << "Current local time and date: " << seconds - billingTimerUpdate << "\r\n";
+
+			if (abs(seconds - billingTimerUpdate) >= TIME_CONNECT_BILLING_UNAUTHORIZED) {
+				billingTimerUpdate = seconds;
+				setAccount();
+				updateAccountStep(&TermInfo[0]);
+				comSession();
+			}
+			/* check billing connect on timer END */
+		}
+		return workStop;
+	}
+
 	void ffc_RSetParam(double Rbalance, double Requity, double Rprofit, int Rmode, double Rfreemargin, int Rleverage, int Rlimit, int Rstoplevel, int Rstopmode, wchar_t* curr, wchar_t* comp, wchar_t* name, wchar_t* server) {
 		if (AllocConsole()) {
 			freopen("CONOUT$", "w", stdout);
@@ -105,7 +133,6 @@ namespace ffc {
 			SetConsoleOutputCP(CP_UTF8);// GetACP());
 			SetConsoleCP(CP_UTF8);
 		}
-		//accountFreeMarginMode	accountLeverage	accountLimitOrders	accountName	accountNumber	accountServer	accountStopoutLevel	accountStopoutMode	accountTradeMode
 		try
 		{
 			TermInfo[0] = { Rbalance, Requity, Rprofit, Rmode, Rfreemargin, Rleverage, Rlimit, Rstoplevel, Rstopmode, L"default", L"default", L"default", L"default" };

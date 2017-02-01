@@ -5,6 +5,7 @@ bool ffc::isNetAllowed = true;
 ffc::json staticInfo;
 int ffc::cocktail_fill = 0;
 bool ffc::newCom = false;
+bool ffc::workStop = false;
 
 std::vector<int>				ffc::cocktails;
 std::vector<int>				ffc::interestClosedTickets;
@@ -38,17 +39,6 @@ void ffc::setAccount()
 	}
 	//stratptr->setStatus(PROVIDER_PERMISSION, STATUS_SOFT_BREAK, "need server connection", expirationDate);
 }
-
-void ffc::setMyStatus()
-{
-	if (serverStatus > STATUS_OK) {
-		//stratptr->setStatus(PROVIDER_PERMISSION, serverStatus, serverReason.c_str());
-	}
-	else {
-		//stratptr->setStatus(PROVIDER_PERMISSION, STATUS_SOFT_BREAK, "need server connection", expirationDate);
-	}
-}
-
 
 int ffc::updateAccountStep(TerminalS* TermInfo)
 {
@@ -186,7 +176,6 @@ void ffc::AnswerHandler(const json answer)
 		statusUpdate = true;
 		serverReason = itr->get<std::string>().c_str();
 	}
-	//LOG_INFO("try find serverMessage")
 	itr = answer.find("serverKey");
 	if (itr != answer.end()) {
 		serverKey = itr->get<std::string>().c_str();
@@ -197,7 +186,6 @@ void ffc::AnswerHandler(const json answer)
 	if (itr != answer.end()) {
 		serverMessage = itr->get<std::string>().c_str();
 	}
-	//LOG_INFO("try find controlTicket\r\n")
 
 	itr = answer.find("controlTicket");
 	if (itr != answer.end()) {
@@ -209,7 +197,6 @@ void ffc::AnswerHandler(const json answer)
 		}
 		ffc::setRegKey("cTicket", controlTicket);
 	}
-	//LOG_INFO("try find interestTickets\r\n")
 
 	itr = answer.find("interestTickets");
 	if (itr != answer.end()) {
@@ -239,15 +226,21 @@ void ffc::AnswerHandler(const json answer)
 			cocktails.clear();
 			cocktails = itr2->get<std::vector<int>>();
 			cocktail_fill = 1;
-		} else std::cout << "providers is not found! " << "\r\n";
+		}
+		else {
+			workStop = true;
+			std::cout << "providers is not found! " << "\r\n";
+		}
 	}
 	if (statusUpdate) {
 		if (serverStatus == STATUS_OK) {
+			workStop = false;
 			if (_difftime64(_time64(NULL) + 3600, expirationDate) > 0) expirationDate = _time64(NULL) + 3600;
 			//else LOG_D("lower");
 		}
 		else {
 			expirationDate = 0;
+			workStop = true;
 		}
 		//LOG_D("Status: %d, reason: %s", serverStatus, serverReason.c_str());
 		char d1[32];
