@@ -46,7 +46,7 @@ namespace ffc {
 	void resetActions();
 
 	void createOrder(wchar_t* symbol, int type, double lots, double openPrice, double slPrice, double tpPrice, wchar_t* comment = L"", int cfgMagic = 0);
-	void createOrder(FfcOrder* order);
+	void createOrder(FfcOrder* order, double lots);
 	void modOrder(int ticket, int type, double lots, double openprice, double slprice, double tpprice, wchar_t* symbol);
 	void deleteOrder(int ticket);
 	void closeOrder(int ticket, double lots, double openprice);

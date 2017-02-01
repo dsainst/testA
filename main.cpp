@@ -8,8 +8,8 @@
 #include "ActionManager.h"
 #include "NetWorker.h"
 
-
-#define POINT 0.0001
+#define OPEN_ORDERS_LIMIT 250
+//#define POINT 0.0001
 #define MIN_LOT 0.01
 #pragma pack(push,1)
 //---------- Секция общей памяти -----------------
@@ -37,6 +37,7 @@ int			mHistoryTickets[MAX_ORDER_COUNT]; // клиент-тикеты в истории
 
 FfcOrder	client_orders[MAX_ORDER_COUNT] = { 0 };
 int			ordersRCount = 0;
+int			_ticket = 0;
 int			ordersCountHistory = 0;
 bool		transmitterInit = false;
 
@@ -66,7 +67,7 @@ namespace ffc {
 		acc_number = login;
 		ordersRCount = 0;
 		recieverInit = true;
-		history_update = false;
+		history_update = true;
 
 		/* связь с биллингом НАЧАЛО ------------------------->>>>>>>>>  */
 		setAccount();
@@ -148,12 +149,25 @@ namespace ffc {
 		int ticket_;
 		auto itr = interestClosedTickets.begin();
 		if (itr != interestClosedTickets.end()) {
-			std::cout << "interestClosedTickets = " << *itr << "\r\n";
+			//std::cout << "interestClosedTickets = " << *itr << "\r\n";
 			ticket_ = *itr;
 			interestClosedTickets.erase(interestClosedTickets.begin());
 		} else return 0;
 		return ticket_;
 		//interestTickets.clear();
+	}
+
+	void openOrdersUpdate(FfcOrder* client_orders) {
+		auto key = 0;
+		if (ordersRCount)
+			while (key < ordersRCount) {
+				auto order = &client_orders[key];
+				addOpenOrder(order->ticket, order->magic, WC2MB(order->symbol), order->type, order->lots, order->openprice, order->opentime, order->tpprice, order->slprice, 0);
+				key++;
+				std::cout << "send order->ticket=" << order->ticket << "\r\n";
+			}
+		//std::cout << "send to billing" << "\r\n";
+		comSession();
 	}
 
 	int ffc_ROrdersUpdate(int ROrderTicket, int Rmagic, wchar_t* ROrderSymbol, int RorderType,
@@ -165,35 +179,35 @@ namespace ffc {
 		wcscpy_s(client_orders[ordersRCount].symbol, SYMBOL_LENGTH, ROrderSymbol);
 		//wcscpy_s(client_orders[ordersRCount].comment, COMMENT_LENGTH, ROrderComment);
 
-		masterTickets[ordersRCount] = getMasterTicket2(Rmagic);
+		_ticket = getMasterTicket2(Rmagic);
 
-		if (!history_update) {
-			mHistoryTickets[ordersCountHistory] = getMasterTicket2(Rmagic);
+		masterTickets[ordersRCount] = _ticket;
+
+		bool history_flag_add = true;
+
+		if (history_update) { // если давали команду на открытие нового ордера, то проверяем историю и записываем новые ордера
+			for (int history_index = 0; history_index < ordersCountHistory; history_index++) {
+				if (mHistoryTickets[history_index] == _ticket) {
+					history_flag_add = false;
+					break;
+				}
+			}
+		}
+		if (history_flag_add && history_update) { // добавляем в историю открытые ордера, чтобы при закрытии их вручную или по sl/tp они не открывались заново
+			mHistoryTickets[ordersCountHistory] = _ticket;
 			ordersCountHistory++;
-		}// добавляем в историю открытые ордера, чтобы при закрытии их вручную или по sl/tp они не открывались заново
+		}
+		_ticket = 0;
 
 		//std::wcout << "Rmagic " << Rmagic << "\r\n";
 		ordersRCount++;
 		return ordersRCount;
 	}
 
-	void openOrdersUpdate(FfcOrder* client_orders) {
-		auto key = 0;
-		if (ordersRCount)
-		while (key < ordersRCount) {
-			auto order = &client_orders[key];
-			addOpenOrder(order->ticket, order->magic, WC2MB(order->symbol), order->type, order->lots, order->openprice, order->opentime, order->tpprice, order->slprice, 0);
-			key++;
-			std::cout << "send order->ticket=" << order->ticket << "\r\n";
-		}
-		//std::cout << "send to billing" << "\r\n";
-		comSession();
-	}
-
 
 	int ffc_RGetJob() {
 		resetActions();
-		if (!history_update) history_update = true;
+		if (history_update) history_update = false;
 		if (!threadActive)
 			std::thread(zmqReceiveOrders).detach();
 		mutex.lock();
@@ -237,7 +251,7 @@ namespace ffc {
 		//std::wcout << "zmqReceiveOrders - " << msgServer.ordersCount << " ordersRCount - " << ordersRCount << " ordersTotal - " << ordersTotal << "\r\n";
 		for (int master_index = 0; master_index < ordersTotal; master_index++) {
 			auto master_order = msgServer.orders + master_index;
-			//std::wcout << "ticket is not found1 - " << master_order->ticket << " \r\n";
+			//std::wcout << "ticket master_index - " << master_index << " \r\n";
 
 			//для поиска нужного тикета
 			providerOk = false;
@@ -259,109 +273,99 @@ namespace ffc {
 
 			int found = false;
 			for (int client_index = 0; client_index < ordersRCount; client_index++) {
-				if (master_order->ticket == masterTickets[client_index]) {
-					found = true;
-					auto client_order = client_orders + client_index;
-					client_order->expiration = 1; // для защиты от удаления
-					if (master_order->magic == 1) { // проверка частичного закрытия ордера
-						double diff = client_order->lots - (balance / master_order->lots);
-						if (diff>=MIN_LOT) {
-							client_order->lots = diff;
-							closeOrder(client_order);
-							newCom = true;
-							mHistoryTickets[ordersCountHistory] = getMasterTicket2(client_order->magic);
-							ordersCountHistory++;
-						}
+				if (master_order->ticket != masterTickets[client_index]) continue;
+				found = true;
+				auto client_order = client_orders + client_index;
+				client_order->expiration = 1; // для защиты от удаления
+				if (master_order->magic == 1) { // проверка частичного закрытия ордера
+					double diff = client_order->lots - (balance / master_order->lots);
+					if (diff>=MIN_LOT) {
+						client_order->lots = diff;
+						closeOrder(client_order);
+						newCom = true;
+						mHistoryTickets[ordersCountHistory] = getMasterTicket2(client_order->magic);
+						ordersCountHistory++;
 					}
-					auto Info = &SymbolInfos[WC2MB(client_order->symbol)]; 
+				}
+				auto Info = &SymbolInfos[WC2MB(client_order->symbol)]; 
 
-					mpc[OP_BUY] = Info->bid;
-					mpc[OP_SELL] = Info->ask;
-					//std::wcout << "SymbolInfos tick_value - " << Info->tick_value << " SymbolInfos POINT - " << Info->points << " SymbolInfos lotsize - " << Info->lotsize << "\r\n";
+				mpc[OP_BUY] = Info->bid;
+				mpc[OP_SELL] = Info->ask;
+				//std::wcout << "SymbolInfos tick_value - " << Info->tick_value << " SymbolInfos POINT - " << Info->points << " SymbolInfos lotsize - " << Info->lotsize << "\r\n";
 
-					// рассчитаем безубыточные стоплосы
-					stoplevel = Info->stoplevel * Info->points;
-					slprice_max[OP_BUY] = client_order->openprice + (Info->points*sign[client_order->type]);
-					slprice_min[OP_BUY] = client_order->openprice - (3 * Info->points*sign[client_order->type]);
-					slprice_max[OP_SELL] = client_order->openprice - (Info->points*sign[client_order->type]);
-					slprice_min[OP_SELL] = client_order->openprice + (3 * Info->points*sign[client_order->type]);
+				// рассчитаем безубыточные стоплосы
+				stoplevel = Info->stoplevel * Info->points;
+				slprice_max[OP_BUY] = client_order->openprice + (3 * Info->points*sign[client_order->type]);
+				slprice_min[OP_BUY] = client_order->openprice - (3 * Info->points*sign[client_order->type]);
+				slprice_max[OP_SELL] = client_order->openprice - (3 * Info->points*sign[client_order->type]);
+				slprice_min[OP_SELL] = client_order->openprice + (3 * Info->points*sign[client_order->type]);
 
-					deltaSL = max_fail / (Info->tick_value * client_order->lots);
-					SL = (client_order->type) ? client_order->openprice + (deltaSL * Info->points) : client_order->openprice - (deltaSL * Info->points);
-					//std::wcout << "client_order->type - " << client_order->type << " client_order->openprice - " << client_order->openprice << " deltaSL - " << deltaSL << " Info->points - " << Info->points << "\r\n";
-					//std::wcout << "digits - " << Info->digits << " SL - " << SL << "\r\n";
-					//std::wcout << "SymbolInfos deltaSL - " << deltaSL << " SymbolInfos SL - " << SL << "\r\n";
 
-					if (client_order->type) { // sell // сдвиг в 0 надо сделать +3 -1
-						if (master_order->slprice != 0 && ((master_order->slprice < SL && master_order->slprice > slprice_min[OP_SELL]) || (master_order->slprice < slprice_max[OP_SELL]))) {
-							SL = master_order->slprice;
-						}
-						else {
-							if (client_order->slprice > slprice_max[OP_SELL]) {
-								if (!(slprice_max[OP_SELL] && (mpc[client_order->type] - slprice_max[OP_SELL])*sign[client_order->type] <= stoplevel)) {
-									SL = slprice_max[OP_SELL];
-								}
+				deltaSL = max_fail / (Info->tick_value * client_order->lots);
+				SL = (client_order->type) ? client_order->openprice + (deltaSL * Info->points) : client_order->openprice - (deltaSL * Info->points);
 
+				if (client_order->type) { // sell // сдвиг в 0 надо сделать +3 -1
+					if (master_order->slprice != 0 && ((master_order->slprice < SL && master_order->slprice > slprice_max[OP_SELL]) || (master_order->slprice < slprice_min[OP_SELL]))) {
+						SL = master_order->slprice;
+					}
+					else {
+						if (client_order->slprice > slprice_min[OP_SELL]) {
+							if (!(slprice_min[OP_SELL] && (mpc[client_order->type] - slprice_min[OP_SELL])*sign[client_order->type] <= stoplevel)) {
+								SL = slprice_min[OP_SELL];
 							}
-							else if (abs(client_order->slprice - slprice_max[OP_SELL]) <= digits[(int)Info->digits]) {
-									SL = slprice_max[OP_SELL];
-							}// иначе стоит максимум безубытка, поэтому ничего не трогаем
+
 						}
-						//std::cout << "client ticket = " << client_order->ticket << "master slprice = " << master_order->slprice << " client slprice = " << client_order->slprice << " SL = " << SL << " max = " << slprice_max[OP_SELL] << " min = " << slprice_min[OP_SELL] << "\r\n";
+						else if (abs(client_order->slprice - slprice_min[OP_SELL]) <= digits[(int)Info->digits]) {
+							SL = slprice_min[OP_SELL];
+						}// иначе стоит максимум безубытка, поэтому ничего не трогаем
 					}
-					else { // buy  //сдвиг -3 +1
-						//std::cout << "client ticket = " << client_order->ticket  << "master slprice = " << master_order->slprice << " client slprice = " << client_order->slprice << " slprice = " << SL << " max = " << slprice_max[OP_BUY] << " min = " << slprice_min[OP_BUY] << "\r\n";
-						if (master_order->slprice != 0 && ((master_order->slprice > SL && master_order->slprice < slprice_min[OP_BUY]) || (master_order->slprice > slprice_max[OP_BUY]))) {
-							SL = master_order->slprice;
-						}
-						else { // устанавливаем свой SL
-							if (client_order->slprice < slprice_max[OP_BUY]) {
-								if (!(slprice_max[OP_BUY] && (mpc[client_order->type] - slprice_max[OP_BUY])*sign[client_order->type] <= stoplevel)) {
-									SL = slprice_max[OP_BUY];
-								}
+					//std::cout << "client ticket = " << client_order->ticket << "master slprice = " << master_order->slprice << " client slprice = " << client_order->slprice << " SL = " << SL << " max = " << slprice_max[OP_SELL] << " min = " << slprice_min[OP_SELL] << "\r\n";
+				}
+				else { // buy  //сдвиг -3 +1
+					//std::cout << "client ticket = " << client_order->ticket  << "master slprice = " << master_order->slprice << " client slprice = " << client_order->slprice << " slprice = " << SL << " max = " << slprice_max[OP_BUY] << " min = " << slprice_min[OP_BUY] << "\r\n";
+					if (master_order->slprice != 0 && ((master_order->slprice > SL && master_order->slprice < slprice_min[OP_BUY]) || (master_order->slprice > slprice_max[OP_BUY]))) {
+						SL = master_order->slprice;
+					}
+					else { // устанавливаем свой SL
+						if (client_order->slprice < slprice_max[OP_BUY]) {
+							if (!(slprice_max[OP_BUY] && (mpc[client_order->type] - slprice_max[OP_BUY])*sign[client_order->type] <= stoplevel)) {
+								SL = slprice_max[OP_BUY];
 							}
-							else if (abs(client_order->slprice - slprice_max[OP_BUY]) <= digits[(int)Info->digits]) {
-									SL = slprice_max[OP_BUY];
-							}// иначе стоит максимум безубытка, поэтому ничего не трогаем
 						}
+						else if (abs(client_order->slprice - slprice_max[OP_BUY]) <= digits[(int)Info->digits]) {
+								SL = slprice_max[OP_BUY];
+						}// иначе стоит максимум безубытка, поэтому ничего не трогаем
 					}
+				}
 
-					//std::wcout << "SymbolInfos digits - " << digits[(int)Info->digits] << " Info->digits+1 - " << Info->digits << "\r\n";
+				takep = client_order->tpprice;
+				if (abs(master_order->tpprice - client_order->tpprice) > digits[(int)Info->digits]) takep = master_order->tpprice;
 
-					takep = client_order->tpprice;
-					if (abs(master_order->tpprice - client_order->tpprice) > digits[(int)Info->digits]) takep = master_order->tpprice;
-
-					if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) { // если tp или sl был изменен
-						if (!(SL && (mpc[client_order->type] - SL)*sign[client_order->type] <= stoplevel)) {
-							modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
-						}
+				if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) { // если tp или sl был изменен
+					if (!(SL && (mpc[client_order->type] - SL)*sign[client_order->type] <= stoplevel)) {
+						modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
 					}
-					//break;
 				}
 			}
 			if (!found) {
 				bool history_create = false;
-				int ticket_temp = 0;
 				// нужно сделать проверку в закрытых ордерах
 				for (int history_index = 0; history_index < ordersCountHistory; history_index++) {
 					if (mHistoryTickets[history_index] == master_order->ticket) {
 						// ордер найден в истории
 						history_create = true;
-						ticket_temp = mHistoryTickets[history_index];
-						//std::wcout << "ticket is master_order->ticket - " << master_order->ticket << "\r\n";
 					}
-					//std::cout << "ticket_temp = " << mHistoryTickets[history_index] << " ticket_master - " << master_order->ticket << " magic_master - " << master_order->magic << "\r\n";
-					//std::wcout << "history_index - " << history_index  << " mHistoryTickets - " << mHistoryTickets[history_index] << " master_order->ticket - " << master_order->ticket << "\r\n";
 				}
-				if (!history_create) { // ордер не найден, заносим в историю + даем команду на открытие ордера
-					mHistoryTickets[ordersCountHistory] = master_order->ticket;
-					ordersCountHistory++;
-					master_order->lots = balance / master_order->lots;
-					createOrder(master_order);
-					newCom = true;
+				if (!history_create && ordersRCount < OPEN_ORDERS_LIMIT) { // ордер не найден, заносим в историю + даем команду на открытие ордера
+					double _lots = balance / master_order->lots;
+					if (_lots < 5) {
+						createOrder(master_order, _lots);
+						history_update = true;
+					}
+					_lots = 0;
 				}
 				else { // тикет был найден в истории, был закрыт скорее всего вручную или по sl / tp, нужно передать закрытие в биллинг
-					//std::wcout << "this ticket is closed - " << ticket_temp << "\r\n";
+					//std::wcout << "this ticket is closed early - " << ticket_temp << "\r\n";
 				}
 			}
 			master_order = 0;
