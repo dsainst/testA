@@ -236,35 +236,15 @@ void ffc::AnswerHandler(const json answer)
 		if (serverStatus == STATUS_OK) {
 			workStop = false;
 			if (_difftime64(_time64(NULL) + 3600, expirationDate) > 0) expirationDate = _time64(NULL) + 3600;
-			//else LOG_D("lower");
 		}
 		else {
 			expirationDate = 0;
 			workStop = true;
 		}
-		//LOG_D("Status: %d, reason: %s", serverStatus, serverReason.c_str());
-		char d1[32];
-		_ctime64_s(d1, &expirationDate);
+		//char d1[32];
+		//_ctime64_s(d1, &expirationDate);
 
-		ffc::setRegKey("currentPattern", expirationDate ^ floatKey);
-
-		//LOG_INFO("Start change statuses - ")
-		/*for (auto& entry : pool) {
-		if (entry == nullptr) continue;
-		if (entry->mqlTester || entry->mqlOptimization) {
-		//entry->setStatus(PROVIDER_PERMISSION, STATUS_OK, "test is allowed");
-		}
-		else {
-		if (serverStatus > STATUS_OK) {
-		//entry->setStatus(PROVIDER_PERMISSION, serverStatus, serverReason.c_str());
-		}
-		else {
-		//entry->setStatus(PROVIDER_PERMISSION, STATUS_SOFT_BREAK, "need server connection", expirationDate);
-		}
-		//LOG_T("AnswerHandler set statuses")
-		}
-		}*/
-		//LOG_INFO("end change statuses\r\n")
+		//ffc::setRegKey("currentPattern", expirationDate ^ floatKey);
 	}
 }
 
