@@ -2,6 +2,7 @@
 #include "utils.h"
 
 #include "zmq.h"
+#include <fstream>
 
 #include <stdlib.h>
 #include <thread>
@@ -74,7 +75,9 @@ std::string ffc::WC2MB(const wchar_t* line) {
 
 void ffc::initZMQ() {
 	context = zmq_ctx_new();
+	if (!context) return;
 	request = zmq_socket(context, ZMQ_SUB);
+	if (!request) return;
 
 	int counter = zmq_connect(request, SERVER_ADDR); 
 	//zmq_setsockopt(request, ZMQ_IDENTITY, "", 0);
@@ -85,23 +88,58 @@ void ffc::initZMQ() {
 	std::wcout << "Received: " << "connect = " << counter << "\r\n";
 }
 
-void ffc::zmqReceiveOrders() {
+bool ffc::zmqReceiveOrders() {
 	threadActive = true;
 	zmq_msg_t reply;
-	zmq_msg_init(&reply);
-	zmq_msg_recv(&reply, request, 0);
+	if (zmq_msg_init(&reply) == -1) {
+		deInitZMQ();
+		initZMQ();
+		std::cout << "zmq_msg_init wrong \r\n";
+		return false;
+	};
+	int ret = zmq_msg_recv(&reply, request, ZMQ_DONTWAIT);
+	if (ret <= 0) {
+		if (errno != EAGAIN) {
+			std::cout << "zmq error: " << errno << "\r\n";
+			deInitZMQ();
+			initZMQ();
+		}
+		return false;
+	}
 	int totalMSG = zmq_msg_size(&reply);
-	mutex.lock();
+	std::lock_guard<std::mutex> locker(mutex);
 	msgServer = {};
 	memcpy(&msgServer, zmq_msg_data(&reply), totalMSG);
-	mutex.unlock();
 	std::wcout << "Receiver size order - " << totalMSG << ". \r\n";
 	std::wcout << "Received: valid = " << msgServer.validation << " count = " << msgServer.ordersCount << "\r\n";
 	zmq_msg_close(&reply);
 	threadActive = false;
+	return true;
 }
 
 void ffc::deInitZMQ() {
 	zmq_close(request);
 	zmq_ctx_destroy(context);
+	std::cout << "deInitZMQ \r\n";
+}
+
+void ffc::LogFile(std::string  line) {
+	std::ofstream file;
+	//can't enable exception now because of gcc bug that raises ios_base::failure with useless message
+	//file.exceptions(file.exceptions() | std::ios::failbit);
+	file.open("C:\\Users\\Admin\\AppData\\Roaming\\MetaQuotes\\Terminal\\C6D03BEE984A8FF7763AA4060BA5C4AC\\MQL4\\Experts\\log_Anderson.txt", std::ios::out | std::ios::app);
+	if (file.fail())
+		throw std::ios_base::failure(std::strerror(errno));
+
+	//make sure write fails with exception if something is wrong
+	file.exceptions(file.exceptions() | std::ios::failbit | std::ifstream::badbit);
+
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+
+	file << asctime(timeinfo) << line.c_str() << "\r\n---------------------------------------\r\n";
+
 }

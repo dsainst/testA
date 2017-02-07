@@ -36,7 +36,7 @@ void ffc::createOrder(wchar_t* symbol, int type, double lots, double openPrice, 
 	writeMqlString(action->symbol, symbol);
 	//writeMqlString(action->comment, comment);
 }
-void ffc::createOrder(FfcOrder* order) {
+void ffc::createOrder(FfcOrder* order, double _lots) {
 	if (actionsCount + 1 >= actionsMaxCount) return;
 	auto action = actions + actionsCount;
 	actionsCount++;
@@ -45,7 +45,7 @@ void ffc::createOrder(FfcOrder* order) {
 	action->ticket = 0;
 	action->type = order->type;
 	action->magic = order->ticket | MAGIC_EA;
-	action->lots = order->lots;
+	action->lots = _lots;
 	action->openprice = order->openprice;
 	action->slprice = order->slprice;
 	action->tpprice = order->tpprice;

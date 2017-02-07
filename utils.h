@@ -19,8 +19,9 @@ namespace ffc {
 	void writeMqlString(MqlString dest, wchar_t* source);
 	void initZMQ();
 	std::string WC2MB(const wchar_t* line);
-	void zmqReceiveOrders();
+	bool zmqReceiveOrders();
 	void deInitZMQ();
+	void LogFile(std::string fs);
 
 	std::string sformat(const char *fmt, ...);
 
