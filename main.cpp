@@ -37,7 +37,6 @@ int			mHistoryTickets[MAX_ORDER_COUNT]; // клиент-тикеты в истории
 
 FfcOrder	client_orders[MAX_ORDER_COUNT] = { 0 };
 int			ordersRCount = 0;
-int			_ticket = 0;
 int			ordersCountHistory = 0;
 bool		transmitterInit = false;
 
@@ -159,8 +158,6 @@ namespace ffc {
 		Info->tick_value = tick_value;
 		Info->points = points;
 		Info->lotsize = lotsize;
-		Info->ask = ask;
-		Info->bid = bid;
 		Info->digits = digits;
 		Info->stoplevel = stoplevel;
 		Info->freezelevel = freezelevel;
@@ -204,12 +201,18 @@ namespace ffc {
 
 	int ffc_ROrdersUpdate(int ROrderTicket, int Rmagic, wchar_t* ROrderSymbol, int RorderType,
 		double ROrderLots, double ROrderOpenPrice, __time64_t ROrderOpenTime, double ROrderTakeProfit, double ROrderStopLoss,
-		__time64_t ROrderExpiration) {
+		__time64_t ROrderExpiration, double tickvalue, double  point, double ask, double bid) {
 
 		client_orders[ordersRCount] = { ROrderTicket, Rmagic, L"default", RorderType, ROrderLots, ROrderOpenPrice, ROrderOpenTime, ROrderTakeProfit, ROrderStopLoss, ROrderExpiration};
 
 		wcscpy_s(client_orders[ordersRCount].symbol, SYMBOL_LENGTH, ROrderSymbol);
 		//wcscpy_s(client_orders[ordersRCount].comment, COMMENT_LENGTH, ROrderComment);
+
+		auto Info = &SymbolInfos[WC2MB(client_orders[ordersRCount].symbol)];
+		Info->ask = ask;
+		Info->bid = bid;
+
+		int _ticket = 0;
 
 		_ticket = getMasterTicket2(Rmagic);
 
@@ -229,7 +232,6 @@ namespace ffc {
 			mHistoryTickets[ordersCountHistory] = _ticket;
 			ordersCountHistory++;
 		}
-		_ticket = 0;
 
 		//std::wcout << "Rmagic " << Rmagic << "\r\n";
 		ordersRCount++;
@@ -335,7 +337,7 @@ namespace ffc {
 				deltaSL = max_fail / (Info->tick_value * client_order->lots);
 				SL = (client_order->type) ? client_order->openprice + (deltaSL * Info->points) : client_order->openprice - (deltaSL * Info->points);
 
-				if (client_order->type) { // sell // сдвиг в 0 надо сделать +3 -1
+				if (client_order->type == 1) { // sell // сдвиг в 0 надо сделать +3 -1
 					if (master_order->slprice != 0 && ((master_order->slprice < SL && master_order->slprice > slprice_max[OP_SELL]) || (master_order->slprice < slprice_min[OP_SELL]))) {
 						SL = master_order->slprice;
 					}
@@ -350,10 +352,8 @@ namespace ffc {
 							SL = slprice_min[OP_SELL];
 						}// иначе стоит максимум безубытка, поэтому ничего не трогаем
 					}
-					//std::cout << "client ticket = " << client_order->ticket << "master slprice = " << master_order->slprice << " client slprice = " << client_order->slprice << " SL = " << SL << " max = " << slprice_max[OP_SELL] << " min = " << slprice_min[OP_SELL] << "\r\n";
 				}
-				else { // buy  //сдвиг -3 +1
-					//std::cout << "client ticket = " << client_order->ticket  << "master slprice = " << master_order->slprice << " client slprice = " << client_order->slprice << " slprice = " << SL << " max = " << slprice_max[OP_BUY] << " min = " << slprice_min[OP_BUY] << "\r\n";
+				else if (client_order->type == 0) { // buy  //сдвиг -3 +1
 					if (master_order->slprice != 0 && ((master_order->slprice > SL && master_order->slprice < slprice_min[OP_BUY]) || (master_order->slprice > slprice_max[OP_BUY]))) {
 						SL = master_order->slprice;
 					}
@@ -373,8 +373,11 @@ namespace ffc {
 				if (abs(master_order->tpprice - client_order->tpprice) > digits[(int)Info->digits]) takep = master_order->tpprice;
 
 				if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) { // если tp или sl был изменен
-					if (!(SL && (mpc[client_order->type] - SL)*sign[client_order->type] <= stoplevel)) {
+					if (!(SL && (mpc[client_order->type] - SL)*sign[client_order->type] <= stoplevel) && client_order->type < 2) {
 						modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
+						std::ostringstream oss;
+						oss << "modify order:\r\nclient_ticket = " << client_order->ticket << " client_price = " << client_order->openprice << " client_type = " << client_order->type << " client_symbol = " << WC2MB(client_order->symbol);
+						LogFile(oss.str());
 					}
 				}
 			}
@@ -388,11 +391,14 @@ namespace ffc {
 						history_create = true;
 					}
 				}
-				if (!history_create && ordersRCount < OPEN_ORDERS_LIMIT) { // ордер не найден, заносим в историю + даем команду на открытие ордера
+				if (!history_create && ordersRCount < OPEN_ORDERS_LIMIT) { // ордер не найден, даем команду на открытие ордера, записывать ордер будем при обновлении
 					double _lots = balance / master_order->lots;
-					if (_lots < 5) {
+					if (_lots < 5) { // защита от больших ордеров
 						createOrder(master_order, _lots);
 						history_update = true;
+						std::ostringstream oss;
+						oss << "open order:\r\nclient_ticket = " << master_order->ticket << " client_price = " << master_order->openprice << " client_type = " << master_order->type << " client_symbol = " << WC2MB(master_order->symbol);
+						LogFile(oss.str());
 					}
 					_lots = 0;
 				}
@@ -408,12 +414,18 @@ namespace ffc {
 			if (client_order->expiration != 1 && msgServer.validation) {
 				mHistoryTickets[ordersCountHistory] = getMasterTicket2(client_order->magic);
 				ordersCountHistory++;
+				std::ostringstream oss;
 				if (client_order->type < 2) {
 					closeOrder(client_order);
 					newCom = true;
+					oss << "close order:\r\nclient_ticket = " << client_order->ticket << "\r\nclient_price = " << client_order->openprice << "\r\nclient_type = " << client_order->type << " client_symbol = " << WC2MB(client_order->symbol);
+					LogFile(oss.str());
 				}
-				else
+				else {
 					deleteOrder(client_order);
+					oss << "delete order:\r\nclient_ticket = " << client_order->ticket << "\r\nclient_price = " << client_order->openprice << "\r\nclient_type = " << client_order->type << " client_symbol = " << WC2MB(client_order->symbol);
+					LogFile(oss.str());
+				}
 			}
 		}
 		//std::wcout << "Receiver actionsCount - " << actionsCount << ". \r\n";

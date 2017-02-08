@@ -38,7 +38,7 @@
 
 #define TIME_CONNECT_BILLING				900			// время в секундах - через которое идет коннект с биллингом
 #define TIME_CONNECT_BILLING_UNAUTHORIZED	60			// таймер проверки неавторизованных пользователей
-#define COCKTAIL_ID							1			// id коктейля
+#define COCKTAIL_ID							8			// id коктейля
 
 
 #define PROJECT_URL	   "fairforex.org"

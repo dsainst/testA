@@ -169,7 +169,7 @@ void ffc::terminalInfoCalc(wchar_t* symbol_name) {
 
 double ffc::normLot(double value, wchar_t* symbol_name) {
 	auto Info = &SymbolInfos[WC2MB(symbol_name)];
-	value = ceil(value / Info->lotstep) * Info->lotstep;
+	value = round(value / Info->lotstep) * Info->lotstep;
 	value = max(value, Info->min_lot);
 	return min(value, Info->max_lot);
 }

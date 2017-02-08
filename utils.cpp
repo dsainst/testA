@@ -127,7 +127,7 @@ void ffc::LogFile(std::string  line) {
 	std::ofstream file;
 	//can't enable exception now because of gcc bug that raises ios_base::failure with useless message
 	//file.exceptions(file.exceptions() | std::ios::failbit);
-	file.open("C:\\Users\\Admin\\AppData\\Roaming\\MetaQuotes\\Terminal\\C6D03BEE984A8FF7763AA4060BA5C4AC\\MQL4\\Experts\\log_Anderson.txt", std::ios::out | std::ios::app);
+	file.open("M:\\dev\\FF_Anderson\\Release\\log_Anderson.txt", std::ios::out | std::ios::app); //C:\\Users\\Admin\\AppData\\Roaming\\MetaQuotes\\Terminal\\C6D03BEE984A8FF7763AA4060BA5C4AC\\MQL4\\Experts
 	if (file.fail())
 		throw std::ios_base::failure(std::strerror(errno));
 
