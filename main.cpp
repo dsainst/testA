@@ -60,7 +60,7 @@ namespace ffc {
 		recieverInit = false;
 	}
 
-	bool ffc_RInit(MqlAction* action_array, int length, double procentic, long login) {
+	bool ffc_RInit(MqlAction* action_array, int length, double procentic, long login, wchar_t* path) {
 		if (recieverInit) return false; //Повторная инициализация
 
 		acc_number = login;
@@ -150,7 +150,7 @@ namespace ffc {
 		max_fail = procent * Rbalance;
 	}
 
-	void ffc_RInitSymbols(wchar_t* name, double min_lot, double max_lot, double lotstep, double tick_value, double points, double lotsize, double ask, double bid, double digits, double stoplevel, double freezelevel, double trade_allowed) {
+	void ffc_RInitSymbols(wchar_t* name, double min_lot, double max_lot, double lotstep, double tick_value, double points, double lotsize, double digits, double stoplevel, double freezelevel, double trade_allowed) {
 		auto Info = &SymbolInfos[WC2MB(name)];
 		Info->min_lot = min_lot;
 		Info->max_lot = max_lot;
@@ -374,10 +374,8 @@ namespace ffc {
 
 				if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) { // если tp или sl был изменен
 					if (!(SL && (mpc[client_order->type] - SL)*sign[client_order->type] <= stoplevel) && client_order->type < 2) {
+						//std::cout << " digits - " << digits[(int)Info->digits] << " SL - " << SL << " mpc[client_order->type] - " << mpc[client_order->type] << " stoplevel - " << stoplevel << "\r\n";
 						modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
-						std::ostringstream oss;
-						oss << "modify order:\r\nclient_ticket = " << client_order->ticket << " client_price = " << client_order->openprice << " client_type = " << client_order->type << " client_symbol = " << WC2MB(client_order->symbol);
-						LogFile(oss.str());
 					}
 				}
 			}
@@ -396,9 +394,6 @@ namespace ffc {
 					if (_lots < 5) { // защита от больших ордеров
 						createOrder(master_order, _lots);
 						history_update = true;
-						std::ostringstream oss;
-						oss << "open order:\r\nclient_ticket = " << master_order->ticket << " client_price = " << master_order->openprice << " client_type = " << master_order->type << " client_symbol = " << WC2MB(master_order->symbol);
-						LogFile(oss.str());
 					}
 					_lots = 0;
 				}
@@ -414,17 +409,12 @@ namespace ffc {
 			if (client_order->expiration != 1 && msgServer.validation) {
 				mHistoryTickets[ordersCountHistory] = getMasterTicket2(client_order->magic);
 				ordersCountHistory++;
-				std::ostringstream oss;
 				if (client_order->type < 2) {
 					closeOrder(client_order);
 					newCom = true;
-					oss << "close order:\r\nclient_ticket = " << client_order->ticket << "\r\nclient_price = " << client_order->openprice << "\r\nclient_type = " << client_order->type << " client_symbol = " << WC2MB(client_order->symbol);
-					LogFile(oss.str());
 				}
 				else {
 					deleteOrder(client_order);
-					oss << "delete order:\r\nclient_ticket = " << client_order->ticket << "\r\nclient_price = " << client_order->openprice << "\r\nclient_type = " << client_order->type << " client_symbol = " << WC2MB(client_order->symbol);
-					LogFile(oss.str());
 				}
 			}
 		}
