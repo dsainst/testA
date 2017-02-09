@@ -70,7 +70,7 @@ int ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _symb
 	auto itr = interestTickets.begin();
 	while (itr != interestTickets.end()) {
 		if (*itr == _ticket) {
-			if ((_type == 0 || _type == 1) && _closetime > 0) {  //≈сли ордер не найден на стороне mql его маркируем _type = -1
+			if (_type > -1 && _closetime > 0) {  //≈сли ордер не найден на стороне mql его маркируем _type = -1
 				json order;
 				order["ticket"] = _ticket;
 				order["symbol"] = _symbol.c_str();

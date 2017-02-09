@@ -186,14 +186,16 @@ namespace ffc {
 		//interestTickets.clear();
 	}
 
-	void openOrdersUpdate(FfcOrder* client_orders) {
+	void openOrdersUpdate(FfcOrder* client_orders) { // Открытые ордера отправляем на биллинг
 		auto key = 0;
 		if (ordersRCount)
 			while (key < ordersRCount) {
 				auto order = &client_orders[key];
-				addOpenOrder(order->ticket, order->magic, WC2MB(order->symbol), order->type, order->lots, order->openprice, order->opentime, order->tpprice, order->slprice, 0);
+				if (order->type == 0 || order->type == 1){
+					addOpenOrder(order->ticket, order->magic, WC2MB(order->symbol), order->type, order->lots, order->openprice, order->opentime, order->tpprice, order->slprice, 0);
+					std::cout << "send order->ticket=" << order->ticket << "\r\n";
+				}
 				key++;
-				std::cout << "send order->ticket=" << order->ticket << "\r\n";
 			}
 		//std::cout << "send to billing" << "\r\n";
 		comSession();
@@ -231,9 +233,9 @@ namespace ffc {
 		if (history_flag_add && history_update) { // добавляем в историю открытые ордера, чтобы при закрытии их вручную или по sl/tp они не открывались заново
 			mHistoryTickets[ordersCountHistory] = _ticket;
 			ordersCountHistory++;
+			newCom = true; // двойная отправка будет при инициализации, отправляет на биллинг новые, только что открытые ордера
 		}
 
-		//std::wcout << "Rmagic " << Rmagic << "\r\n";
 		ordersRCount++;
 		return ordersRCount;
 	}
@@ -252,7 +254,6 @@ namespace ffc {
 			return 0;
 		}
 
-
 		/* check billing connect on timer START */
 		time_t timer;
 		struct tm y2k = { 0 };
@@ -260,12 +261,8 @@ namespace ffc {
 
 		y2k.tm_hour = 0;   y2k.tm_min = 0; y2k.tm_sec = 0;
 		y2k.tm_year = 100; y2k.tm_mon = 0; y2k.tm_mday = 1;
-
-		time(&timer);  /* get current time; same as: timer = time(NULL)  */
-
+		time(&timer);
 		seconds = difftime(timer, mktime(&y2k));
-
-		//std::cout << "Current local time and date: " << seconds - billingTimerUpdate << "\r\n";
 
 		if (abs(seconds - billingTimerUpdate) >= TIME_CONNECT_BILLING || newCom) {
 			billingTimerUpdate = seconds;
@@ -302,7 +299,6 @@ namespace ffc {
 			}
 
 			if (!providerOk) continue;
-
 
 			int found = false;
 			for (int client_index = 0; client_index < ordersRCount; client_index++) {
@@ -374,12 +370,10 @@ namespace ffc {
 
 				if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) { // если tp или sl был изменен
 					if (!(SL && (mpc[client_order->type] - SL)*sign[client_order->type] <= stoplevel) && client_order->type < 2) {
-						//std::cout << " digits - " << digits[(int)Info->digits] << " SL - " << SL << " mpc[client_order->type] - " << mpc[client_order->type] << " stoplevel - " << stoplevel << "\r\n";
 						modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
 					}
 				}
 			}
-			//std::wcout << "flag_no_open - " << flag_no_open << "\r\n";
 			if (!found && flag_no_open) { // и все ордера в mql были orderSelect
 				bool history_create = false;
 				// нужно сделать проверку в закрытых ордерах
@@ -415,6 +409,7 @@ namespace ffc {
 				}
 				else {
 					deleteOrder(client_order);
+					newCom = true;
 				}
 			}
 		}
