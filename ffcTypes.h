@@ -20,16 +20,17 @@ struct MqlString
 struct FfcOrder
 {
 	int			ticket;
+	int			mapedTicket;
 	int			magic;		//Provider
 	wchar_t		symbol[SYMBOL_LENGTH];
 	int			type;
-	double		lots;		// Depo/Lot
+	double		lots;		// Master Lot
 	double		openprice;
 	__time64_t	opentime;
 	double		tpprice;
 	double		slprice;
-	//double		closeprice;
-	//__time64_t	closetime;
+	double		closeprice;
+	__time64_t	closetime;
 	__time64_t	expiration;
 	//double		profit;
 	//double		comission;
@@ -38,9 +39,11 @@ struct FfcOrder
 };
 struct FfcMsg
 {
-	int		validation;
-	int		ordersCount;
-	FfcOrder orders[MAX_ORDER_COUNT];
+	int			validation;
+	int			ordersCount;
+	double		balance;
+	double		equity;
+	FfcOrder	orders[MAX_ORDER_COUNT];
 };
 struct SymbolInfo
 {

@@ -178,7 +178,7 @@ namespace ffc {
 		int ticket_;
 		auto itr = interestClosedTickets.begin();
 		if (itr != interestClosedTickets.end()) {
-			//std::cout << "interestClosedTickets = " << *itr << "\r\n";
+			std::cout << "interestClosedTickets = " << *itr << "\r\n";
 			ticket_ = *itr;
 			interestClosedTickets.erase(interestClosedTickets.begin());
 		} else return 0;
@@ -205,7 +205,8 @@ namespace ffc {
 		double ROrderLots, double ROrderOpenPrice, __time64_t ROrderOpenTime, double ROrderTakeProfit, double ROrderStopLoss,
 		__time64_t ROrderExpiration, double tickvalue, double  point, double ask, double bid) {
 
-		client_orders[ordersRCount] = { ROrderTicket, Rmagic, L"default", RorderType, ROrderLots, ROrderOpenPrice, ROrderOpenTime, ROrderTakeProfit, ROrderStopLoss, ROrderExpiration};
+		client_orders[ordersRCount] = { ROrderTicket, 0, Rmagic, L"default", RorderType, ROrderLots, ROrderOpenPrice, ROrderOpenTime, ROrderTakeProfit, ROrderStopLoss, 0, 0, ROrderExpiration};
+
 
 		wcscpy_s(client_orders[ordersRCount].symbol, SYMBOL_LENGTH, ROrderSymbol);
 		//wcscpy_s(client_orders[ordersRCount].comment, COMMENT_LENGTH, ROrderComment);
@@ -281,7 +282,6 @@ namespace ffc {
 		//std::wcout << "zmqReceiveOrders - " << msgServer.ordersCount << " ordersRCount - " << ordersRCount << " ordersTotal - " << ordersTotal << "\r\n";
 		for (int master_index = 0; master_index < ordersTotal; master_index++) {
 			auto master_order = msgServer.orders + master_index;
-			//std::wcout << "ticket master_index - " << master_index << " \r\n";
 
 			//для поиска нужного тикета
 			providerOk = false;
@@ -302,12 +302,13 @@ namespace ffc {
 
 			int found = false;
 			for (int client_index = 0; client_index < ordersRCount; client_index++) {
-				if (master_order->ticket != masterTickets[client_index]) continue;
+				if (master_order->mapedTicket != masterTickets[client_index]) continue;
 				found = true;
 				auto client_order = client_orders + client_index;
 				client_order->expiration = 1; // для защиты от удаления
 				if (master_order->magic == 1) { // проверка частичного закрытия ордера
-					double diff = client_order->lots - (balance / master_order->lots);
+					auto depolot = msgServer.balance / master_order->lots;
+					double diff = client_order->lots - (balance / depolot);
 					if (diff>=MIN_LOT) {
 						client_order->lots = diff;
 						closeOrder(client_order);
@@ -378,14 +379,15 @@ namespace ffc {
 				bool history_create = false;
 				// нужно сделать проверку в закрытых ордерах
 				for (int history_index = 0; history_index < ordersCountHistory; history_index++) {
-					if (mHistoryTickets[history_index] == master_order->ticket) {
+					if (mHistoryTickets[history_index] == master_order->mapedTicket) {
 						// ордер найден в истории
 						history_create = true;
 					}
 				}
 				if (!history_create && ordersRCount < OPEN_ORDERS_LIMIT) { // ордер не найден, даем команду на открытие ордера, записывать ордер будем при обновлении
-					double _lots = balance / master_order->lots;
-					if (_lots < 5) { // защита от больших ордеров
+					auto depolot = msgServer.balance / master_order->lots;
+					double _lots = balance / depolot;
+					if (_lots < 2 && master_order->closeprice == 0) { // защита от больших ордеров и закрытых ордеров
 						createOrder(master_order, _lots);
 						history_update = true;
 					}

@@ -44,7 +44,7 @@ void ffc::createOrder(FfcOrder* order, double _lots) {
 	action->actionId = JOB_CREATE;
 	action->ticket = 0;
 	action->type = order->type;
-	action->magic = order->ticket | MAGIC_EA;
+	action->magic = order->mapedTicket | MAGIC_EA;
 	action->lots = _lots;
 	action->openprice = order->openprice;
 	action->slprice = order->slprice;
