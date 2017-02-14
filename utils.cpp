@@ -9,8 +9,8 @@
 #include <atomic>
 #include <iostream>
 
-//#define SERVER_ADDR "tcp://212.116.110.46:8083"
-#define SERVER_ADDR "tcp://127.0.0.1:8083"
+#define SERVER_ADDR "tcp://212.116.110.46:8083"
+//#define SERVER_ADDR "tcp://127.0.0.1:8083"
 
 void* context;
 void* request;
@@ -94,9 +94,9 @@ bool ffc::zmqReceiveOrders() {
 	if (zmq_msg_init(&reply) == -1) {
 		deInitZMQ();
 		initZMQ();
-		std::cout << "zmq_msg_init wrong \r\n";
+		threadActive = false;
 		return false;
-	};
+	}
 	int ret = zmq_msg_recv(&reply, request, ZMQ_DONTWAIT);
 	if (ret <= 0) {
 		if (errno != EAGAIN) {
@@ -104,12 +104,15 @@ bool ffc::zmqReceiveOrders() {
 			deInitZMQ();
 			initZMQ();
 		}
+		threadActive = false;
 		return false;
 	}
 	int totalMSG = zmq_msg_size(&reply);
-	std::lock_guard<std::mutex> locker(mutex);
+	//std::lock_guard<std::mutex> locker(mutex);
+	mutex.lock();
 	msgServer = {};
 	memcpy(&msgServer, zmq_msg_data(&reply), totalMSG);
+	mutex.unlock();
 	std::wcout << "Receiver size order - " << totalMSG << ". \r\n";
 	std::wcout << "Received: valid = " << msgServer.validation << " count = " << msgServer.ordersCount << "\r\n";
 	zmq_msg_close(&reply);

@@ -200,7 +200,7 @@ void ffc::AnswerHandler(const json answer)
 
 	itr = answer.find("interestTickets");
 	if (itr != answer.end()) {
-		std::cout << "start update interestTickers...\r\n";
+		std::cout << "start update interestTickets...\r\n";
 		interestTickets.clear();
 		interestClosedTickets.clear();
 		interestTickets = itr->get<std::vector<int>>();

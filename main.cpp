@@ -44,6 +44,8 @@ int			sign[2] = { 1,-1 };
 double		mpo[2];
 double		mpc[2];
 
+int depolot = 0;
+
 double billingTimerUpdate = 0;
 
 TerminalS	TermInfo[1] = { 0 };
@@ -55,18 +57,14 @@ nlohmann::json ffc::mainPackage;
 
 namespace ffc {
 
-	void ffc_RDeInit() {
-		deInitZMQ();
-		recieverInit = false;
-	}
-
-	bool ffc_RInit(MqlAction* action_array, int length, double procentic, long login, wchar_t* path) {
+	bool ffc_RInit(MqlAction* action_array, int length, double procentic, int lotsize, long login, wchar_t* path) {
 		if (recieverInit) return false; //ѕовторна€ инициализаци€
 
 		acc_number = login;
 		ordersRCount = 0;
 		recieverInit = true;
 		history_update = true;
+		depolot = lotsize;
 
 		/* св€зь с биллингом Ќј„јЋќ ------------------------->>>>>>>>>  */
 		setAccount();
@@ -98,7 +96,7 @@ namespace ffc {
 		oss << "acc_number = ";
 		oss << acc_number;
 		LogFile(oss.str());
-		std::wcout << "Receiver inited.v3.1 \r\n";
+		std::wcout << "Receiver inited.v3.2 \r\n";
 		return true; //»нициализаци€ успешна
 	}
 
@@ -247,11 +245,12 @@ namespace ffc {
 		if (history_update) history_update = false;
 		if (!threadActive)
 			std::thread(zmqReceiveOrders).detach();
-		std::lock_guard<std::mutex> locker(mutex);
-
+		//std::lock_guard<std::mutex> locker(mutex);
+		mutex.lock();
 		// выходим сразу, если нет провайдеров
 		if (cocktails.size() == 0) {
 			providerOk = false;
+			mutex.unlock();
 			return 0;
 		}
 
@@ -280,6 +279,7 @@ namespace ffc {
 		double digits[6] = { 0, 0.1, 0.01, 0.001, 0.0001, 0.00001 };
 		ordersTotal = msgServer.ordersCount;
 		//std::wcout << "zmqReceiveOrders - " << msgServer.ordersCount << " ordersRCount - " << ordersRCount << " ordersTotal - " << ordersTotal << "\r\n";
+
 		for (int master_index = 0; master_index < ordersTotal; master_index++) {
 			auto master_order = msgServer.orders + master_index;
 
@@ -307,8 +307,14 @@ namespace ffc {
 				auto client_order = client_orders + client_index;
 				client_order->expiration = 1; // дл€ защиты от удалени€
 				if (master_order->magic == 1) { // проверка частичного закрыти€ ордера
-					auto depolot = msgServer.balance / master_order->lots;
-					double diff = client_order->lots - (balance / depolot);
+					double diff = 0;
+					if (depolot) {
+						auto lotsize = msgServer.balance / master_order->lots;
+						diff = client_order->lots - (balance / lotsize);
+					}
+					else {
+						diff = client_order->lots - master_order->lots;
+					}
 					if (diff>=MIN_LOT) {
 						client_order->lots = diff;
 						closeOrder(client_order);
@@ -385,13 +391,18 @@ namespace ffc {
 					}
 				}
 				if (!history_create && ordersRCount < OPEN_ORDERS_LIMIT) { // ордер не найден, даем команду на открытие ордера, записывать ордер будем при обновлении
-					auto depolot = msgServer.balance / master_order->lots;
-					double _lots = balance / depolot;
-					if (_lots < 2 && master_order->closeprice == 0) { // защита от больших ордеров и закрытых ордеров
+					double _lots = 0;
+					if (depolot) {
+						auto lotsize = msgServer.balance / master_order->lots;
+						_lots = balance / depolot;
+					}
+					else {
+						_lots = master_order->lots;
+					}
+					if (_lots < 2 && _lots > 0 && master_order->closeprice == 0) { // защита от больших ордеров и закрытых ордеров
 						createOrder(master_order, _lots);
 						history_update = true;
 					}
-					_lots = 0;
 				}
 				else { // тикет был найден в истории, был закрыт скорее всего вручную или по sl / tp, нужно передать закрытие в биллинг
 					//std::wcout << "this ticket is closed early - " << ticket_temp << "\r\n";
@@ -399,6 +410,7 @@ namespace ffc {
 			}
 			master_order = 0;
 		}
+
 		for (int client_index = 0; client_index < ordersRCount; client_index++) {
 			auto client_order = client_orders + client_index;
 
@@ -417,9 +429,15 @@ namespace ffc {
 		}
 		//std::wcout << "Receiver actionsCount - " << actionsCount << ". \r\n";
 		ordersRCount = 0;
+		mutex.unlock();
 		return actionsCount;
 	}
 
+
+	void ffc_RDeInit() {
+		deInitZMQ();
+		recieverInit = false;
+	}
 
 	//--------------------------------------------------------------------------------------------
 }
