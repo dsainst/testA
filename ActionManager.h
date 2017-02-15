@@ -30,6 +30,7 @@ namespace ffc {
 		double      tpprice;	// 8 bytes
 		double      slprice;	// 8 bytes
 		__time64_t	expiration;	// 8 bytes
+		int			original;
 //		MqlString	comment;	// 12 bytes
 	};
 #pragma pack(pop,1)

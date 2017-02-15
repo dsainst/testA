@@ -123,7 +123,7 @@ namespace ffc {
 	static void			sendStaticInfo();
 	int					updateAccountStep(TerminalS* TermInfo);
 
-	int					updateOrderClosed(int _ticket, int _type, int _magic, std::string _symbol, double _lots, __time64_t _opentime, double _openprice, double _tp, double _sl, __time64_t _closetime, double _closeprice, double _profit);
+	void					updateOrderClosed(int _ticket, int _type, int _magic, std::string _symbol, double _lots, __time64_t _opentime, double _openprice, double _tp, double _sl, __time64_t _closetime, double _closeprice, double _profit);
 
 	extern void			addOpenOrder(int _ticket, int _magic, std::string symbol, int _type, double _lots, double _openprice, __time64_t _opentime, double _tp, double _sl, int _provider);
 

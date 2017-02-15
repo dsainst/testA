@@ -4,6 +4,7 @@
 #define SYMBOL_LENGTH	16
 #define COMMENT_LENGTH	32
 #define MAX_ORDER_COUNT	200
+#define MAX_ORDER_HISTORY_COUNT	500
 #define MAGIC_EA	0x70004000
 #define MAGIC_EA_MASK	0x00000FFF
 #pragma pack(pop,1)

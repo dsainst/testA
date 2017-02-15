@@ -52,7 +52,7 @@ void ffc::createOrder(FfcOrder* order, double _lots) {
 	action->expiration = 0;
 
 	writeMqlString(action->symbol, order->symbol);
-	//writeMqlString(action->comment, order->comment);
+	action->original = order->ticket;
 }
 
 void ffc::modOrder(int ticket, int type, double lots, double openprice, double slprice, double tpprice, wchar_t* symbol) { //

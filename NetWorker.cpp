@@ -64,13 +64,12 @@ int ffc::updateAccountStep(TerminalS* TermInfo)
 	return 0;
 }
 
-int ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _symbol, double _lots, __time64_t _opentime, double _openprice, double _tp, double _sl, __time64_t _closetime, double _closeprice, double _profit)
+void ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _symbol, double _lots, __time64_t _opentime, double _openprice, double _tp, double _sl, __time64_t _closetime, double _closeprice, double _profit)
 {
-	int next = 0;
 	auto itr = interestTickets.begin();
 	while (itr != interestTickets.end()) {
 		if (*itr == _ticket) {
-			if (_type > -1 && _closetime > 0) {  //Если ордер не найден на стороне mql его маркируем _type = -1
+			if (_type > -1 && _closeprice > 0) {  //Если ордер не найден на стороне mql его маркируем _type = -1
 				json order;
 				order["ticket"] = _ticket;
 				order["symbol"] = _symbol.c_str();
@@ -87,17 +86,13 @@ int ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _symb
 				mainPackage["closedOrders"].push_back(order);
 			}
 			itr = interestTickets.erase(itr);
-			if (itr != interestTickets.end()) {
-				next = *itr;
+			if (mainPackage.find("closedOrders") != mainPackage.end()) { //если есть что отослать, отсылаем
+				newCom = true;
+				break;
 			}
-			else if (mainPackage.find("closedOrders") != mainPackage.end()) { //если есть что отослать, отсылаем
-			newCom = true;
-			}
-			break;
 		}
 		else { itr++; }
 	}
-	return next;
 }
 
 void ffc::addOpenOrder(int _ticket, int _magic, std::string _symbol, int _type, double _lots, double _openprice, __time64_t _opentime, double _tp, double _sl, int _provider)
