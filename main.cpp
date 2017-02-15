@@ -177,6 +177,8 @@ namespace ffc {
 				ordersCountHistoryMax = ordersCountHistory;
 		}
 
+		//std::cout << "Order History ticket = " << orderTicket << " mapedTicket = " << getMasterTicket2(orderMagic) << " index = " << ordersCountHistoryMax << "\r\n";
+
 		updateOrderClosed(orderTicket, orderType, orderMagic, WC2MB(orderSymbol), orderLots, orderOpenTime, orderOpenPrice, orderTp, orderSl, orderCloseTime, orderClosePrice, orderSwap + orderCom + orderProf);
 	}
 
@@ -295,6 +297,8 @@ namespace ffc {
 		for (int master_index = 0; master_index < ordersTotal; master_index++) {
 			auto master_order = msgServer.orders + master_index;
 
+			//std::cout << "Order master ticket = " << master_order->ticket << " mapped ticket = " << master_order->mapedTicket << "\r\n";
+
 			//для поиска нужного тикета
 			providerOk = false;
 			unsigned int vector_size = cocktails.size();
@@ -350,7 +354,7 @@ namespace ffc {
 				//std::wcout << "SymbolInfos tick_value - " << Info->tick_value << " SymbolInfos POINT - " << Info->points << " SymbolInfos lotsize - " << Info->lotsize << "\r\n";
 
 				// рассчитаем безубыточные стоплосы
-				stoplevel = Info->stoplevel * Info->points;
+				/*stoplevel = Info->stoplevel * Info->points;
 				slprice_max[OP_BUY] = client_order->openprice + (3 * Info->points*sign[client_order->type]);
 				slprice_min[OP_BUY] = client_order->openprice - (3 * Info->points*sign[client_order->type]);
 				slprice_max[OP_SELL] = client_order->openprice - (3 * Info->points*sign[client_order->type]);
@@ -395,6 +399,21 @@ namespace ffc {
 				takep = client_order->tpprice;
 				if (abs(master_order->tpprice - client_order->tpprice) > digits[(int)Info->digits]) takep = master_order->tpprice;
 
+				if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) { // если tp или sl был изменен
+					if (!(SL && (mpc[client_order->type] - SL)*sign[client_order->type] <= stoplevel) && client_order->type < 2) {
+						modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
+					}
+				}*/
+
+				SL = 0;
+				takep = 0;
+				if (master_order->slprice != 0 || master_order->tpprice != 0) {
+					if (master_order->slprice > 0)
+						SL = master_order->slprice;
+					if (master_order->tpprice > 0)
+						takep = master_order->tpprice;
+				}
+				// копируем стоплосы и тейкпрофит у мастера
 				if (abs(SL - client_order->slprice) > digits[(int)Info->digits] || abs(takep - client_order->tpprice) > digits[(int)Info->digits]) { // если tp или sl был изменен
 					if (!(SL && (mpc[client_order->type] - SL)*sign[client_order->type] <= stoplevel) && client_order->type < 2) {
 						modOrder(client_order->ticket, client_order->type, client_order->lots, client_order->openprice, SL, takep, client_order->symbol);
