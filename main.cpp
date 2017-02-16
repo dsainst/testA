@@ -33,13 +33,12 @@ bool		recieverInit = false;
 //double		stoploss = 0;
 double		procent = 0.02; // процент просирания
 double		max_fail = 0; // максимальная сумма, которую не жалко просрать
-int			mHistoryTickets[MAX_ORDER_HISTORY_COUNT]; // клиент-тикеты в истории + открытые ордера
+int			mHistoryTickets[4096]; // клиент-тикеты в истории + открытые ордера
 
 FfcOrder	client_orders[MAX_ORDER_COUNT] = { 0 };
 int			ordersRCount = 0;
-int			ordersCountHistory = 0;
-int			ordersCountHistoryMax = 0;
 bool		transmitterInit = false;
+bool flagprint = 0;
 
 int			sign[2] = { 1,-1 };
 double		mpo[2];
@@ -58,8 +57,8 @@ nlohmann::json ffc::mainPackage;
 
 namespace ffc {
 
-	bool ffc_RInit(MqlAction* action_array, int length, double procentic, int lotsize, long login, wchar_t* path) {
-		if (recieverInit) return false; //Повторная инициализация
+	bool ffc_RInit(MqlAction* action_array, int length, double procentic, int lotsize, long login, wchar_t* path, int flag_reinit) {
+		if (recieverInit && !flag_reinit) return false; //Повторная инициализация
 
 		acc_number = login;
 		ordersRCount = 0;
@@ -71,9 +70,6 @@ namespace ffc {
 		setAccount();
 		updateAccountStep(&TermInfo[0]); 
 		comSession();
-
-		ordersCountHistory = 0;
-		ordersCountHistoryMax = 0;
 
 		// запускаем таймер для связи с биллингом
 		time_t timer;
@@ -100,6 +96,7 @@ namespace ffc {
 		oss << "acc_number = ";
 		oss << acc_number;
 		LogFile(oss.str());
+		flagprint = 1;
 		std::wcout << "Receiver inited.v3.2 \r\n";
 		return true; //Инициализация успешна
 	}
@@ -167,19 +164,11 @@ namespace ffc {
 	}
 
 	void ffc_RHistoryUpdate(int orderMagic, int orderTicket, __time64_t orderCloseTime, double orderClosePrice, int orderType, wchar_t* orderSymbol, double orderLots, double orderOpenPrice, __time64_t orderOpenTime, double orderTp, double orderSl, double orderSwap, double orderCom, double orderProf) {
-		mHistoryTickets[ordersCountHistory] = getMasterTicket2(orderMagic);
-		ordersCountHistory++; 
-		if (ordersCountHistory > 499) {
-			ordersCountHistoryMax = 500;
-			ordersCountHistory = 0;
-		} else {
-			if (ordersCountHistoryMax != 500)
-				ordersCountHistoryMax = ordersCountHistory;
-		}
+		mHistoryTickets[getMasterTicket2(orderMagic)] = orderTicket;
 
-		//std::cout << "Order History ticket = " << orderTicket << " mapedTicket = " << getMasterTicket2(orderMagic) << " index = " << ordersCountHistoryMax << "\r\n";
-
-		updateOrderClosed(orderTicket, orderType, orderMagic, WC2MB(orderSymbol), orderLots, orderOpenTime, orderOpenPrice, orderTp, orderSl, orderCloseTime, orderClosePrice, orderSwap + orderCom + orderProf);
+		std::cout << "Order History ticket = " << orderTicket << " mapedTicket = " << getMasterTicket2(orderMagic) << "\r\n";
+		if (orderOpenPrice > 0)
+			updateOrderClosed(orderTicket, orderType, orderMagic, WC2MB(orderSymbol), orderLots, orderOpenTime, orderOpenPrice, orderTp, orderSl, orderCloseTime, orderClosePrice, orderSwap + orderCom + orderProf);
 	}
 
 	void ffc_RClosedUpdate(int orderMagic, int orderTicket, __time64_t orderCloseTime, double orderClosePrice, int orderType, wchar_t* orderSymbol, double orderLots, double orderOpenPrice, __time64_t orderOpenTime, double orderTp, double orderSl, double orderSwap, double orderCom, double orderProf) {
@@ -278,6 +267,8 @@ namespace ffc {
 		time(&timer);
 		seconds = difftime(timer, mktime(&y2k));
 
+
+		// пришло время (каждый час) или внеочередная сессия, передаем открытые ордера на биллинг
 		if (abs(seconds - billingTimerUpdate) >= TIME_CONNECT_BILLING || newCom) {
 			billingTimerUpdate = seconds;
 			openOrdersUpdate(client_orders);
@@ -297,7 +288,9 @@ namespace ffc {
 		for (int master_index = 0; master_index < ordersTotal; master_index++) {
 			auto master_order = msgServer.orders + master_index;
 
-			//std::cout << "Order master ticket = " << master_order->ticket << " mapped ticket = " << master_order->mapedTicket << "\r\n";
+			if (flagprint) {
+				std::cout << "Order master ticket = " << master_order->ticket << " mapped ticket = " << master_order->mapedTicket << "\r\n";
+			}
 
 			//для поиска нужного тикета
 			providerOk = false;
@@ -335,19 +328,10 @@ namespace ffc {
 						client_order->lots = diff;
 						closeOrder(client_order);
 						newCom = true;
-						mHistoryTickets[ordersCountHistory] = getMasterTicket2(client_order->magic);
-						ordersCountHistory++;
-						if (ordersCountHistory > 499) {
-							ordersCountHistoryMax = 500;
-							ordersCountHistory = 0;
-						}
-						else {
-							if (ordersCountHistoryMax != 500)
-								ordersCountHistoryMax = ordersCountHistory;
-						}
+						mHistoryTickets[getMasterTicket2(client_order->magic)] = client_order->ticket;
 					}
 				}
-				auto Info = &SymbolInfos[WC2MB(client_order->symbol)]; 
+				auto Info = &SymbolInfos[WC2MB(client_order->symbol)];
 
 				mpc[OP_BUY] = Info->bid;
 				mpc[OP_SELL] = Info->ask;
@@ -423,17 +407,29 @@ namespace ffc {
 			if (!found && flag_no_open) { // и все ордера в mql были orderSelect
 				bool history_create = false;
 				// нужно сделать проверку в закрытых ордерах
-				for (int history_index = 0; history_index < ordersCountHistoryMax; history_index++) {
-					if (mHistoryTickets[history_index] == master_order->mapedTicket) {
+				for (int history_index = 0; history_index < 4096; history_index++) {
+					if (mHistoryTickets[history_index] > 0 && history_index == master_order->mapedTicket) {
 						// ордер найден в истории
 						history_create = true;
+
+						// нужно найти тикет и проверить его в закрытых (СЛАБОЕ МЕСТО!!!!!!!!!!) - нужно бы помечать как то проверенные тикеты
+						auto itr = interestTickets.begin();
+						while (itr != interestTickets.end()) {
+							if (*itr == mHistoryTickets[history_index]) {
+								checkClosedOrder(mHistoryTickets[history_index]);
+								break;
+							}
+							else { itr++; }
+						}
+						break;
 					}
 				}
 				if (!history_create && ordersRCount < OPEN_ORDERS_LIMIT) { // ордер не найден, даем команду на открытие ордера, записывать ордер будем при обновлении
+
 					double _lots = 0;
 					if (depolot) {
 						auto lotsize = msgServer.balance / master_order->lots;
-						_lots = balance / depolot;
+						_lots = balance / lotsize;
 					}
 					else {
 						_lots = master_order->lots;
@@ -449,21 +445,14 @@ namespace ffc {
 			}
 			master_order = 0;
 		}
+		if (ordersTotal>0)
+		flagprint = 0;
 
 		for (int client_index = 0; client_index < ordersRCount; client_index++) {
 			auto client_order = client_orders + client_index;
 
 			if (client_order->expiration != 1 && msgServer.validation) {
-				mHistoryTickets[ordersCountHistory] = getMasterTicket2(client_order->magic);
-				ordersCountHistory++;
-				if (ordersCountHistory > 499) {
-					ordersCountHistoryMax = 500;
-					ordersCountHistory = 0;
-				}
-				else {
-					if (ordersCountHistoryMax != 500)
-						ordersCountHistoryMax = ordersCountHistory;
-				}
+				mHistoryTickets[getMasterTicket2(client_order->magic)] = client_order->ticket;
 				if (client_order->type < 2) {
 					closeOrder(client_order);
 					newCom = true;

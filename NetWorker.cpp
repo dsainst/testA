@@ -6,6 +6,7 @@ ffc::json staticInfo;
 int ffc::cocktail_fill = 0;
 bool ffc::newCom = false;
 bool ffc::workStop = false;
+__time64_t ffc::expirationDate = 0;
 
 std::vector<int>				ffc::cocktails;
 std::vector<int>				ffc::interestClosedTickets;
@@ -69,7 +70,7 @@ void ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _sym
 	auto itr = interestTickets.begin();
 	while (itr != interestTickets.end()) {
 		if (*itr == _ticket) {
-			if (_type > -1 && _closeprice > 0) {  //Если ордер не найден на стороне mql его маркируем _type = -1
+			if (_type > -1 && _closetime > 0) {  //Если ордер не найден на стороне mql его маркируем _type = -1
 				json order;
 				order["ticket"] = _ticket;
 				order["symbol"] = _symbol.c_str();
@@ -84,12 +85,12 @@ void ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _sym
 				order["closeprice"] = _closeprice;
 				order["profit"] = _profit;
 				mainPackage["closedOrders"].push_back(order);
-			}
-			itr = interestTickets.erase(itr);
-			if (mainPackage.find("closedOrders") != mainPackage.end()) { //если есть что отослать, отсылаем
+
+				std::cout << "updateOrderClosed : change newcom = 1" << "\r\n";
 				newCom = true;
 				break;
 			}
+			itr = interestTickets.erase(itr);
 		}
 		else { itr++; }
 	}

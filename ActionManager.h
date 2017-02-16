@@ -13,6 +13,7 @@
 #define JOB_DRAW_ORDER  7
 #define JOB_SHOW_VALUE  8
 #define JOB_MSG_BOX     9
+#define JOB_CHECK       10
 #pragma pack(pop,1)
 
 namespace ffc {
@@ -53,6 +54,8 @@ namespace ffc {
 	void closeOrder(int ticket, double lots, double openprice);
 	void closeOrder(FfcOrder* order);
 	void deleteOrder(FfcOrder* order);
+
+	void checkClosedOrder(int ticket);
 
 	void showValue(int line, wchar_t* value);
 

@@ -98,7 +98,7 @@ namespace ffc {
 	static double		accountEquity;
 	static double		accountProfit;
 
-	static __time64_t	expirationDate;
+	extern __time64_t	expirationDate;
 	static __int64		floatKey;
 	static int			controlTicket;		//Тикет контрольного ордера
 	static int			numOrders;

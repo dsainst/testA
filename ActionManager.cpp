@@ -141,6 +141,15 @@ void ffc::deleteOrder(FfcOrder* order) {
 	action->ticket = order->ticket;
 }
 
+void ffc::checkClosedOrder(int ticket) {
+	if (actionsCount + 1 >= actionsMaxCount) return;
+	auto action = actions + actionsCount;
+	actionsCount++;
+
+	action->actionId = JOB_CHECK;
+	action->ticket = ticket;
+}
+
 void ffc::showValue(int line, wchar_t* value) {
 	if (actionsCount + 1 >= actionsMaxCount) return;
 	auto action = actions + actionsCount;
