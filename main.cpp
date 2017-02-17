@@ -33,12 +33,13 @@ bool		recieverInit = false;
 //double		stoploss = 0;
 double		procent = 0.02; // процент просирания
 double		max_fail = 0; // максимальная сумма, которую не жалко просрать
-int			mHistoryTickets[4096]; // клиент-тикеты в истории + открытые ордера
+int			mHistoryTickets[8192]; // клиент-тикеты в истории + открытые ордера
 
 FfcOrder	client_orders[MAX_ORDER_COUNT] = { 0 };
 int			ordersRCount = 0;
 bool		transmitterInit = false;
 bool flagprint = 0;
+bool		getJob = false;
 
 int			sign[2] = { 1,-1 };
 double		mpo[2];
@@ -97,7 +98,7 @@ namespace ffc {
 		oss << acc_number;
 		LogFile(oss.str());
 		flagprint = 1;
-		std::wcout << "Receiver inited.v3.2 \r\n";
+		std::wcout << "FF_Anderson inited.v1.2 \r\n";
 		return true; //Инициализация успешна
 	}
 
@@ -169,6 +170,7 @@ namespace ffc {
 		std::cout << "Order History ticket = " << orderTicket << " mapedTicket = " << getMasterTicket2(orderMagic) << "\r\n";
 		if (orderOpenPrice > 0)
 			updateOrderClosed(orderTicket, orderType, orderMagic, WC2MB(orderSymbol), orderLots, orderOpenTime, orderOpenPrice, orderTp, orderSl, orderCloseTime, orderClosePrice, orderSwap + orderCom + orderProf);
+		if (getJob) newCom = 1; // открылся новый тикет, отправим на биллинг
 	}
 
 	void ffc_RClosedUpdate(int orderMagic, int orderTicket, __time64_t orderCloseTime, double orderClosePrice, int orderType, wchar_t* orderSymbol, double orderLots, double orderOpenPrice, __time64_t orderOpenTime, double orderTp, double orderSl, double orderSwap, double orderCom, double orderProf) {
@@ -202,6 +204,23 @@ namespace ffc {
 		comSession();
 	}
 
+	void connectBilling() {
+		time_t timer;
+		struct tm y2k = { 0 };
+		double seconds;
+
+		y2k.tm_hour = 0;   y2k.tm_min = 0; y2k.tm_sec = 0;
+		y2k.tm_year = 100; y2k.tm_mon = 0; y2k.tm_mday = 1;
+		time(&timer);
+		seconds = difftime(timer, mktime(&y2k));
+
+		// пришло время (каждый час) или внеочередная сессия, передаем открытые ордера на биллинг
+		if (abs(seconds - billingTimerUpdate) >= TIME_CONNECT_BILLING || newCom) {
+			billingTimerUpdate = seconds;
+			openOrdersUpdate(client_orders);
+		}
+	}
+
 	int ffc_ROrdersUpdate(int ROrderTicket, int Rmagic, wchar_t* ROrderSymbol, int RorderType,
 		double ROrderLots, double ROrderOpenPrice, __time64_t ROrderOpenTime, double ROrderTakeProfit, double ROrderStopLoss,
 		__time64_t ROrderExpiration, double tickvalue, double  point, double ask, double bid) {
@@ -224,6 +243,15 @@ namespace ffc {
 		masterTickets[ordersRCount] = _ticket;
 
 		bool history_flag_add = true;
+
+		auto itr = interestClosedTickets.begin();
+		while (itr != interestClosedTickets.end()) {
+			if (*itr == ROrderTicket) {
+				itr = interestClosedTickets.erase(itr);
+				break;
+			}
+			else { itr++; }
+		}
 
 		/*if (history_update) { // если давали команду на открытие нового ордера, то проверяем историю и записываем новые ордера
 			for (int history_index = 0; history_index < ordersCountHistory; history_index++) {
@@ -256,24 +284,11 @@ namespace ffc {
 			providerOk = false;
 			return 0;
 		}
+		// отмечаем что начали работать, этот флаг для отправки новых открытых тикетов в биллинг
+		getJob = true;
 
-		/* check billing connect on timer START */
-		time_t timer;
-		struct tm y2k = { 0 };
-		double seconds;
-
-		y2k.tm_hour = 0;   y2k.tm_min = 0; y2k.tm_sec = 0;
-		y2k.tm_year = 100; y2k.tm_mon = 0; y2k.tm_mday = 1;
-		time(&timer);
-		seconds = difftime(timer, mktime(&y2k));
-
-
-		// пришло время (каждый час) или внеочередная сессия, передаем открытые ордера на биллинг
-		if (abs(seconds - billingTimerUpdate) >= TIME_CONNECT_BILLING || newCom) {
-			billingTimerUpdate = seconds;
-			openOrdersUpdate(client_orders);
-		}
-		/* check billing connect on timer END */
+		// проверяем нужно ли нам отправлять данные на биллинг
+		connectBilling();
 
 		double deltaSL			= 0;
 		double SL				= 0;
@@ -407,22 +422,9 @@ namespace ffc {
 			if (!found && flag_no_open) { // и все ордера в mql были orderSelect
 				bool history_create = false;
 				// нужно сделать проверку в закрытых ордерах
-				for (int history_index = 0; history_index < 4096; history_index++) {
-					if (mHistoryTickets[history_index] > 0 && history_index == master_order->mapedTicket) {
-						// ордер найден в истории
-						history_create = true;
-
-						// нужно найти тикет и проверить его в закрытых (СЛАБОЕ МЕСТО!!!!!!!!!!) - нужно бы помечать как то проверенные тикеты
-						auto itr = interestTickets.begin();
-						while (itr != interestTickets.end()) {
-							if (*itr == mHistoryTickets[history_index]) {
-								checkClosedOrder(mHistoryTickets[history_index]);
-								break;
-							}
-							else { itr++; }
-						}
-						break;
-					}
+				if (mHistoryTickets[master_order->mapedTicket] > 0) {
+					// ордер найден в истории
+					history_create = true;
 				}
 				if (!history_create && ordersRCount < OPEN_ORDERS_LIMIT) { // ордер не найден, даем команду на открытие ордера, записывать ордер будем при обновлении
 
@@ -463,6 +465,14 @@ namespace ffc {
 				}
 			}
 		}
+		// проходимся по интересующим нас тикетам и передаем в биллинг, если находим,
+		auto itr = interestClosedTickets.begin();
+		while (itr != interestClosedTickets.end()) {
+			if (*itr > 0) {
+				checkClosedOrder(*itr);
+				itr = interestClosedTickets.erase(itr);
+			}
+		}
 		//std::wcout << "Receiver actionsCount - " << actionsCount << ". \r\n";
 		ordersRCount = 0;
 		return actionsCount;
@@ -472,6 +482,13 @@ namespace ffc {
 	void ffc_RDeInit() {
 		deInitZMQ();
 		recieverInit = false;
+	}
+
+	int ffc_getDpi() {
+		auto hDC = ::GetDC(nullptr);
+		auto nDPI = ::GetDeviceCaps(hDC, LOGPIXELSX);
+		ReleaseDC(nullptr, hDC);
+		return nDPI;
 	}
 
 	//--------------------------------------------------------------------------------------------

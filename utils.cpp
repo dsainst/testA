@@ -34,7 +34,7 @@ int ffc::getMasterTicket(wchar_t* comment) {
 int ffc::getMasterTicket2(int magic) {
 	int res = MAGIC_EA_MASK & magic;
 	if (res > 4095) {
-		std::wcout << "Вать машу! \r\n";
+		std::wcout << "Вать машу! Magic is wrong! \r\n";
 		return 0;
 	}
 	return res;
@@ -74,6 +74,10 @@ std::string ffc::WC2MB(const wchar_t* line) {
 }
 
 void ffc::initZMQ() {
+	if (context || request) {
+		deInitZMQ();
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+	}
 	context = zmq_ctx_new();
 	if (!context) return;
 	request = zmq_socket(context, ZMQ_SUB);

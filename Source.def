@@ -10,3 +10,4 @@ ffc_RInitSymbols
 ffc_RClosedUpdate
 ffc_RInterestTickets
 ffc_Rworkout
+ffc_getDpi
