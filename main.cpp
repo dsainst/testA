@@ -54,13 +54,14 @@ double billingTimerUpdate = 0;
 TerminalS	TermInfo[1] = { 0 };
 
 bool history_update;
+wchar_t* client_email = L"test string";
 
 nlohmann::json ffc::mainPackage;
 #pragma pack(pop,1)
 
 namespace ffc {
 
-	bool ffc_RInit(MqlAction* action_array, int length, double procentic, int lotsize, long login, wchar_t* path, int flag_reinit) {
+	bool ffc_RInit(MqlAction* action_array, int length, double procentic, int lotsize, long login, wchar_t* email, int flag_reinit) {
 		if (recieverInit && !flag_reinit) return false; //Повторная инициализация
 
 		acc_number = login;
@@ -69,9 +70,12 @@ namespace ffc {
 		history_update = true;
 		depolot = lotsize;
 
+		//wcsncpy_s(client_email, SYMBOL_MAX_LENGTH, email, _TRUNCATE);
+		//wcscpy_s(TermInfo[0].email, SYMBOL_LENGTH, email);
+
 		/* связь с биллингом НАЧАЛО ------------------------->>>>>>>>>  */
 		setAccount();
-		updateAccountStep(&TermInfo[0]); 
+		updateAccountStep(&TermInfo[0]);
 		comSession();
 
 		// запускаем таймер для связи с биллингом
@@ -93,7 +97,7 @@ namespace ffc {
 		if (procentic < 0.1)
 			procent = procentic;
 
-		std::wcout << "acc_number = " << acc_number << " procent_ = " << procentic << "\r\n";
+		std::wcout << "acc_number = " << acc_number << " procent_ = " << procentic  << "\r\n";
 
 		std::ostringstream oss;
 		oss << "acc_number = ";
@@ -136,7 +140,7 @@ namespace ffc {
 	}
 
 	void ffc_RSetParam(double Rbalance, double Requity, double Rprofit, int Rmode, double Rfreemargin, int Rleverage, int Rlimit, int Rstoplevel, int Rstopmode, wchar_t* curr, wchar_t* comp, wchar_t* name, wchar_t* server) {
-		if (false) { //AllocConsole()) {
+		if (AllocConsole()) {//false
 			freopen("CONOUT$", "w", stdout);
 			freopen("conout$", "w", stderr);
 			SetConsoleOutputCP(CP_UTF8);// GetACP());
@@ -144,7 +148,7 @@ namespace ffc {
 		}
 		try
 		{
-			TermInfo[0] = { Rbalance, Requity, Rprofit, Rmode, Rfreemargin, Rleverage, Rlimit, Rstoplevel, Rstopmode, L"default", L"default", L"default", L"default" };
+			TermInfo[0] = { Rbalance, Requity, Rprofit, Rmode, Rfreemargin, Rleverage, Rlimit, Rstoplevel, Rstopmode, L"default", L"default", L"default", L"default", L"default" };
 			wcscpy_s(TermInfo[0].currency, SYMBOL_LENGTH, curr);
 			wcscpy_s(TermInfo[0].companyName, SYMBOL_MAX_LENGTH, comp);
 			wcscpy_s(TermInfo[0].name, SYMBOL_MAX_LENGTH, name);

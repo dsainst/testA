@@ -64,6 +64,7 @@ struct TerminalS
 	wchar_t			companyName[SYMBOL_MAX_LENGTH];
 	wchar_t			name[SYMBOL_MAX_LENGTH];
 	wchar_t			server[SYMBOL_MAX_LENGTH];
+	wchar_t			email[SYMBOL_MAX_LENGTH];
 };
 #pragma pack(pop,1)
 
