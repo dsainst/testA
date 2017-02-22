@@ -19,7 +19,7 @@
 #include <Poco/Util/WinRegistryKey.h>
 
 #pragma pack(push,1)
-#define bill_server "https://api.fairforex.org/" //index.php?r=site/test
+#define bill_server "https://api.fairforex.org/index.php?r=site/ffanderson"
 //work statuses
 #define STATUS_NOT_INIT			-1
 #define STATUS_OK				0
@@ -114,7 +114,7 @@ namespace ffc {
 		double dval;
 		__int64 ival;
 	};
-
+	extern std::vector<int>				accAllowed;
 	static std::vector<int>				interestTickets;	//Тикеты интересных ордеров
 	extern std::vector<int>				interestClosedTickets;	//Тикеты интересных закрытых ордеров
 	extern std::vector<int>				cocktails;			//Провайдеры, в зависимости от коктейля

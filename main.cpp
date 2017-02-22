@@ -8,9 +8,11 @@
 #include "ActionManager.h"
 #include "NetWorker.h"
 
+
 #define OPEN_ORDERS_LIMIT 250
 //#define POINT 0.0001
 #define MIN_LOT 0.01
+
 #pragma pack(push,1)
 //---------- —екци€ общей пам€ти -----------------
 //FfcOrder master_orders[MAX_ORDER_COUNT] = { 0 };
@@ -124,14 +126,17 @@ namespace ffc {
 				setAccount();
 				updateAccountStep(&TermInfo[0]);
 				comSession();
+				deInitZMQ();
+				initZMQ();
 			}
+			workStop = false;
 			/* check billing connect on timer END */
 		}
 		return workStop;
 	}
 
 	void ffc_RSetParam(double Rbalance, double Requity, double Rprofit, int Rmode, double Rfreemargin, int Rleverage, int Rlimit, int Rstoplevel, int Rstopmode, wchar_t* curr, wchar_t* comp, wchar_t* name, wchar_t* server) {
-		if (AllocConsole()) {
+		if (false) { //AllocConsole()) {
 			freopen("CONOUT$", "w", stdout);
 			freopen("conout$", "w", stderr);
 			SetConsoleOutputCP(CP_UTF8);// GetACP());
@@ -189,21 +194,6 @@ namespace ffc {
 		//interestTickets.clear();
 	}
 
-	void openOrdersUpdate(FfcOrder* client_orders) { // ќткрытые ордера отправл€ем на биллинг
-		auto key = 0;
-		if (ordersRCount)
-			while (key < ordersRCount) {
-				auto order = &client_orders[key];
-				if (order->type == 0 || order->type == 1){
-					addOpenOrder(order->ticket, order->magic, WC2MB(order->symbol), order->type, order->lots, order->openprice, order->opentime, order->tpprice, order->slprice, 0);
-					std::cout << "send order->ticket=" << order->ticket << "\r\n";
-				}
-				key++;
-			}
-		//std::cout << "send to billing" << "\r\n";
-		comSession();
-	}
-
 	void connectBilling() {
 		time_t timer;
 		struct tm y2k = { 0 };
@@ -215,15 +205,31 @@ namespace ffc {
 		seconds = difftime(timer, mktime(&y2k));
 
 		// пришло врем€ (каждый час) или внеочередна€ сесси€, передаем открытые ордера на биллинг
-		if (abs(seconds - billingTimerUpdate) >= TIME_CONNECT_BILLING || newCom) {
+		if (abs(seconds - billingTimerUpdate) >= TIME_CONNECT_BILLING) {
 			billingTimerUpdate = seconds;
-			openOrdersUpdate(client_orders);
+			comSession();
 		}
+	}
+
+	bool checkAccAllowed() {
+		auto itr = accAllowed.begin();
+		while (itr != accAllowed.end()) {
+			if (*itr == acc_number) {
+				//std::cout << "acc = " << *itr << " - " << acc_number << "\r\n";
+				return true;
+			}
+			else { itr++; }
+		}
+		workStop = true;
+		return false;
 	}
 
 	int ffc_ROrdersUpdate(int ROrderTicket, int Rmagic, wchar_t* ROrderSymbol, int RorderType,
 		double ROrderLots, double ROrderOpenPrice, __time64_t ROrderOpenTime, double ROrderTakeProfit, double ROrderStopLoss,
 		__time64_t ROrderExpiration, double tickvalue, double  point, double ask, double bid) {
+
+		// проверка наш клиент или нет
+		if (!checkAccAllowed()) return 77777;
 
 		client_orders[ordersRCount] = { ROrderTicket, 0, Rmagic, L"default", RorderType, ROrderLots, ROrderOpenPrice, ROrderOpenTime, ROrderTakeProfit, ROrderStopLoss, 0, 0, ROrderExpiration};
 
@@ -273,7 +279,9 @@ namespace ffc {
 	}
 
 
+
 	int ffc_RGetJob(bool flag_no_open) {
+		if (!checkAccAllowed()) return 77777;
 		resetActions();
 		if (history_update) history_update = false;
 		if (!threadActive)

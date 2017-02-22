@@ -10,6 +10,7 @@ __time64_t ffc::expirationDate = 0;
 
 std::vector<int>				ffc::cocktails;
 std::vector<int>				ffc::interestClosedTickets;
+std::vector<int>				ffc::accAllowed;
 
 void ffc::sendStaticInfo()
 {
@@ -137,13 +138,13 @@ void ffc::comSession() {
 	mainPackage["accountEquity"] = accountEquity;
 	mainPackage["accountProfit"] = accountProfit;
 
-
 	msg = mainPackage.dump().c_str();
 	//std::cout << "msg = " << msg << "\r\n";
 	mainPackage.clear();
 	response = send(msg);
 	if (response != "") {
 		json answer;
+		accAllowed.clear();
 		answer = json::parse(response);
 		if (!answer.empty()) {
 			std::cout << "answer = " << answer << "\r\n";
@@ -228,6 +229,13 @@ void ffc::AnswerHandler(const json answer)
 			std::cout << "providers is not found! " << "\r\n";
 		}
 	}
+
+	itr = answer.find("accnumbers");
+	if (itr != answer.end()) {
+		accAllowed.clear();
+		accAllowed = itr->get<std::vector<int>>();
+	}
+
 	if (statusUpdate) {
 		if (serverStatus == STATUS_OK) {
 			workStop = false;
@@ -303,9 +311,9 @@ std::string ffc::send(const std::string _msg) {
 		form.set("accountCompany", accountCompany.c_str());
 		form.set("serverKey", serverKey.c_str());
 		form.set("codePage", std::to_string(GetACP()));
-		if (!cocktail_fill)
-			form.set("needCocktail", std::to_string(COCKTAIL_ID));
-		form.set("data", _msg.c_str());
+		//if (!cocktail_fill)
+		form.set("needCocktail", std::to_string(COCKTAIL_ID));
+		//form.set("data", _msg.c_str());
 		//std::cout << "account number = " << accountNumber << "\r\n";
 		//std::cout << "account Company = " << accountCompany << "\r\n";
 		form.prepareSubmit(req);
