@@ -9,7 +9,7 @@
 #include "NetWorker.h"
 
 
-#define OPEN_ORDERS_LIMIT 250
+#define OPEN_ORDERS_LIMIT 550
 //#define POINT 0.0001
 #define MIN_LOT 0.01
 
