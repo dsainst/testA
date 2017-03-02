@@ -36,9 +36,9 @@
 #define BASE_KEY64		0x70A12283F4B536C7
 #define EXPIRATION_LIMIT 3*24*60*60
 
-#define TIME_CONNECT_BILLING				900			// врем€ в секундах - через которое идет коннект с биллингом
+#define TIME_CONNECT_BILLING				60			// врем€ в секундах - через которое идет коннект с биллингом
 #define TIME_CONNECT_BILLING_UNAUTHORIZED	60			// таймер проверки неавторизованных пользователей
-#define COCKTAIL_ID							8			// id коктейл€
+#define COCKTAIL_ID							9			// id коктейл€
 
 
 #define PROJECT_URL	   "fairforex.org"
@@ -98,6 +98,7 @@ namespace ffc {
 	static double		accountBalance;
 	static double		accountEquity;
 	static double		accountProfit;
+	static std::string		clientEmail;
 
 	extern __time64_t	expirationDate;
 	static __int64		floatKey;
@@ -148,6 +149,7 @@ namespace ffc {
 	extern void			netWorker();
 	void				setAccount();
 	static void			WriteKey(const std::string key);
+	void				setClientEmail(TerminalS* TermInfo);
 
 
 }

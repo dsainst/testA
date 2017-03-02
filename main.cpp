@@ -40,7 +40,7 @@ int			mHistoryTickets[8192]; // клиент-тикеты в истории + открытые ордера
 FfcOrder	client_orders[MAX_ORDER_COUNT] = { 0 };
 int			ordersRCount = 0;
 bool		transmitterInit = false;
-bool flagprint = 0;
+bool		flagprint = 0;
 bool		getJob = false;
 
 int			sign[2] = { 1,-1 };
@@ -69,9 +69,6 @@ namespace ffc {
 		recieverInit = true;
 		history_update = true;
 		depolot = lotsize;
-
-		//wcsncpy_s(client_email, SYMBOL_MAX_LENGTH, email, _TRUNCATE);
-		//wcscpy_s(TermInfo[0].email, SYMBOL_LENGTH, email);
 
 		/* связь с биллингом НАЧАЛО ------------------------->>>>>>>>>  */
 		setAccount();
@@ -103,7 +100,6 @@ namespace ffc {
 		oss << "acc_number = ";
 		oss << acc_number;
 		LogFile(oss.str());
-		flagprint = 1;
 		std::wcout << "FF_Anderson inited.v1.2 \r\n";
 		return true; //Инициализация успешна
 	}
@@ -139,8 +135,9 @@ namespace ffc {
 		return workStop;
 	}
 
-	void ffc_RSetParam(double Rbalance, double Requity, double Rprofit, int Rmode, double Rfreemargin, int Rleverage, int Rlimit, int Rstoplevel, int Rstopmode, wchar_t* curr, wchar_t* comp, wchar_t* name, wchar_t* server) {
-		if (AllocConsole()) {//false
+	void ffc_RSetParam(double Rbalance, double Requity, double Rprofit, int Rmode, double Rfreemargin, int Rleverage, int Rlimit, int Rstoplevel, int Rstopmode, wchar_t* curr, wchar_t* comp, wchar_t* name, wchar_t* server, wchar_t* email) {
+		flagprint = 0;
+		if (flagprint && AllocConsole()) {//false
 			freopen("CONOUT$", "w", stdout);
 			freopen("conout$", "w", stderr);
 			SetConsoleOutputCP(CP_UTF8);// GetACP());
@@ -153,6 +150,7 @@ namespace ffc {
 			wcscpy_s(TermInfo[0].companyName, SYMBOL_MAX_LENGTH, comp);
 			wcscpy_s(TermInfo[0].name, SYMBOL_MAX_LENGTH, name);
 			wcscpy_s(TermInfo[0].server, SYMBOL_MAX_LENGTH, server);
+			wcscpy_s(TermInfo[0].email, SYMBOL_MAX_LENGTH, email);
 		}
 		catch (const std::exception&) { std::cout << "Dll is not inited!!!" << "\r\n"; }
 		balance = Rbalance;
@@ -175,8 +173,8 @@ namespace ffc {
 
 	void ffc_RHistoryUpdate(int orderMagic, int orderTicket, __time64_t orderCloseTime, double orderClosePrice, int orderType, wchar_t* orderSymbol, double orderLots, double orderOpenPrice, __time64_t orderOpenTime, double orderTp, double orderSl, double orderSwap, double orderCom, double orderProf) {
 		mHistoryTickets[getMasterTicket2(orderMagic)] = orderTicket;
-
-		std::cout << "Order History ticket = " << orderTicket << " mapedTicket = " << getMasterTicket2(orderMagic) << "\r\n";
+		if (flagprint)
+			std::cout << "Order History ticket = " << orderTicket << " mapedTicket = " << getMasterTicket2(orderMagic) << "\r\n";
 		if (orderOpenPrice > 0)
 			updateOrderClosed(orderTicket, orderType, orderMagic, WC2MB(orderSymbol), orderLots, orderOpenTime, orderOpenPrice, orderTp, orderSl, orderCloseTime, orderClosePrice, orderSwap + orderCom + orderProf);
 		if (getJob) newCom = 1; // открылся новый тикет, отправим на биллинг
@@ -208,9 +206,10 @@ namespace ffc {
 		time(&timer);
 		seconds = difftime(timer, mktime(&y2k));
 
-		// пришло время (каждый час) или внеочередная сессия, передаем открытые ордера на биллинг
+		// пришло время (каждый час)
 		if (abs(seconds - billingTimerUpdate) >= TIME_CONNECT_BILLING) {
 			billingTimerUpdate = seconds;
+			setClientEmail(&TermInfo[0]);
 			comSession();
 		}
 	}
@@ -231,9 +230,6 @@ namespace ffc {
 	int ffc_ROrdersUpdate(int ROrderTicket, int Rmagic, wchar_t* ROrderSymbol, int RorderType,
 		double ROrderLots, double ROrderOpenPrice, __time64_t ROrderOpenTime, double ROrderTakeProfit, double ROrderStopLoss,
 		__time64_t ROrderExpiration, double tickvalue, double  point, double ask, double bid) {
-
-		// проверка наш клиент или нет
-		if (!checkAccAllowed()) return 77777;
 
 		client_orders[ordersRCount] = { ROrderTicket, 0, Rmagic, L"default", RorderType, ROrderLots, ROrderOpenPrice, ROrderOpenTime, ROrderTakeProfit, ROrderStopLoss, 0, 0, ROrderExpiration};
 
@@ -285,7 +281,6 @@ namespace ffc {
 
 
 	int ffc_RGetJob(bool flag_no_open) {
-		if (!checkAccAllowed()) return 77777;
 		resetActions();
 		if (history_update) history_update = false;
 		if (!threadActive)
@@ -302,6 +297,15 @@ namespace ffc {
 		// проверяем нужно ли нам отправлять данные на биллинг
 		connectBilling();
 
+
+		if (!checkAccAllowed()) { // проверка наш клиент или нет
+			softBreak();
+			if (ordersRCount == 0) return 1;
+		}
+		else {
+			allOk();
+		}
+
 		double deltaSL			= 0;
 		double SL				= 0;
 		double takep			= 0;
@@ -316,7 +320,7 @@ namespace ffc {
 			auto master_order = msgServer.orders + master_index;
 
 			if (flagprint) {
-				std::cout << "Order master ticket = " << master_order->ticket << " mapped ticket = " << master_order->mapedTicket << "\r\n";
+				//std::cout << "Order master ticket = " << master_order->ticket << " mapped ticket = " << master_order->mapedTicket << "\r\n";
 			}
 
 			//для поиска нужного тикета
@@ -448,8 +452,8 @@ namespace ffc {
 					else {
 						_lots = master_order->lots;
 					}
-					if (_lots < 2 && _lots > 0 && master_order->closeprice == 0) { // защита от больших ордеров и закрытых ордеров
-						createOrder(master_order, _lots);
+					if (_lots < 2 && _lots >= MIN_LOT && master_order->closetime == 0 && checkAccAllowed()) { // защита от больших ордеров и закрытых ордеров
+							createOrder(master_order, _lots);
 						//history_update = true;
 					}
 				}

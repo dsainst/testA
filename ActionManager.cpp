@@ -129,7 +129,23 @@ void ffc::closeOrder(FfcOrder* order) {
 	writeMqlString(action->symbol, order->symbol);
 //	writeMqlString(action->comment, L"");
 
-	std::wcout << "symbol - " << order->symbol << "\r\n";
+	std::wcout << "close order: symbol - " << order->symbol << "\r\n";
+}
+
+void ffc::softBreak() {
+	if (actionsCount + 1 >= actionsMaxCount) return;
+	auto action = actions + actionsCount;
+	actionsCount++;
+
+	action->actionId = JOB_SOFT_BREAK;
+}
+
+void ffc::allOk() {
+	if (actionsCount + 1 >= actionsMaxCount) return;
+	auto action = actions + actionsCount;
+	actionsCount++;
+
+	action->actionId = JOB_ALL_OK;
 }
 
 void ffc::deleteOrder(FfcOrder* order) {

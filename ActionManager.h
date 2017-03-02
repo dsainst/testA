@@ -9,8 +9,8 @@
 #define JOB_DELETE      3
 #define JOB_CLOSE       4
 #define JOB_PRINT_ORDER 5
-#define JOB_PRINT_TEXT  6
-#define JOB_DRAW_ORDER  7
+#define JOB_ALL_OK		6
+#define JOB_SOFT_BREAK  7
 #define JOB_SHOW_VALUE  8
 #define JOB_MSG_BOX     9
 #define JOB_CHECK       10
@@ -54,6 +54,8 @@ namespace ffc {
 	void closeOrder(int ticket, double lots, double openprice);
 	void closeOrder(FfcOrder* order);
 	void deleteOrder(FfcOrder* order);
+	void softBreak();
+	void allOk();
 
 	void checkClosedOrder(int ticket);
 

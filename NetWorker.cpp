@@ -56,6 +56,7 @@ int ffc::updateAccountStep(TerminalS* TermInfo)
 	staticInfo["acc"]["accountLimitOrders"] = std::to_string(TermInfo->limit);
 	staticInfo["acc"]["accountLimitOrders"] = std::to_string(TermInfo->limit);
 	staticInfo["acc"]["accountFreeMarginMode"] = std::to_string(TermInfo->margin);
+	clientEmail = WC2MB(TermInfo->email).c_str();
 
 	accountBalance = TermInfo->balance;
 	accountEquity = TermInfo->equity;
@@ -64,6 +65,10 @@ int ffc::updateAccountStep(TerminalS* TermInfo)
 	accountCompany = WC2MB(TermInfo->companyName);
 
 	return 0;
+}
+
+void ffc::setClientEmail(TerminalS* TermInfo) {
+	clientEmail = WC2MB(TermInfo->email).c_str();
 }
 
 void ffc::updateOrderClosed(int _ticket, int _type, int _magic, std::string _symbol, double _lots, __time64_t _opentime, double _openprice, double _tp, double _sl, __time64_t _closetime, double _closeprice, double _profit)
@@ -134,20 +139,14 @@ void ffc::comSession() {
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-	mainPackage["accountBalance"] = accountBalance;
-	mainPackage["accountEquity"] = accountEquity;
-	mainPackage["accountProfit"] = accountProfit;
-
-	msg = mainPackage.dump().c_str();
-	//std::cout << "msg = " << msg << "\r\n";
 	mainPackage.clear();
-	response = send(msg);
+	response = send(mainPackage.dump().c_str());
 	if (response != "") {
 		json answer;
 		accAllowed.clear();
 		answer = json::parse(response);
 		if (!answer.empty()) {
-			std::cout << "answer = " << answer << "\r\n";
+			//std::cout << "answer = " << answer << "\r\n";
 			AnswerHandler(answer);		//Обработка ответов сервера (lock)
 		} else std::cout << "answer is empty!" << "\r\n";
 	}
@@ -313,6 +312,7 @@ std::string ffc::send(const std::string _msg) {
 		form.set("codePage", std::to_string(GetACP()));
 		//if (!cocktail_fill)
 		form.set("needCocktail", std::to_string(COCKTAIL_ID));
+		form.set("email", clientEmail.c_str());
 		//form.set("data", _msg.c_str());
 		//std::cout << "account number = " << accountNumber << "\r\n";
 		//std::cout << "account Company = " << accountCompany << "\r\n";
